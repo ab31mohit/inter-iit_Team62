@@ -48,3 +48,38 @@ colcon build
 echo 'source ~/inter-iit_ws/install/setup.bash' >> ~/.bashrc
 #if failed, re-run the build command
 ```
+
+### 6. Installing Ggroundcontrol (GCS) :
+```
+sudo usermod -a -G dialout $USER
+sudo apt-get remove modemmanager -y
+sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
+sudo apt install libfuse2 -y
+sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
+cd ~
+```
+
+Now download the app-image file from [here](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage).   
+Change the permissions to run the ground control file and run it.
+```
+chmod +x ./QGroundControl.AppImage
+./QGroundControl.AppImage
+```
+### 6. Testing the basic setup :
+
+Launch gazebo environment & SITL
+
+```
+cd ~/PX4-Autopilot
+make px4_sitl gz_x500
+```   
+
+Run the XRCE-DDS Agent   
+```
+MicroXRCEAgent udp4 -p 8888
+```
+
+In the SITL terminal, give the following command to arm & takeoff the drone
+```
+commander takeoff
+```
