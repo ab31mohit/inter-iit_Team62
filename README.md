@@ -40,7 +40,7 @@ sudo ldconfig /usr/local/lib/
 ### 5. Create a ros2 workspace with basic packages for px4 :
 ```
 mkdir -p ~/inter-iit_ws/src/
-cd ~/ws_ros2/src/
+cd ~/winter-iit_ws/src/
 git clone https://github.com/PX4/px4_msgs.git
 git clone https://github.com/PX4/px4_ros_com.git
 cd ..
