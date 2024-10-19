@@ -83,3 +83,13 @@ In the SITL terminal, give the following command to arm & takeoff the drone
 ```
 commander takeoff
 ```
+
+### 7. Running the PX4_Offboard control setup :
+```
+cd ~/inter-iit_ws/src
+git clone https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example.git
+cd ..
+colcon build --packages-select px4_offboard
+source install/setup.bash
+ros2 launch px4_offboard offboard_velocity_control.launch.py
+```
