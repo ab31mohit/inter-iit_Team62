@@ -111,3 +111,6 @@ colcon build --packages-select px4_offboard
 source install/setup.bash
 ros2 launch px4_offboard offboard_velocity_control.launch.py
 ```
+
+Collaborators: Ronnit
+
