@@ -49,6 +49,19 @@ echo 'source ~/inter-iit_ws/install/setup.bash' >> ~/.bashrc
 #if failed, re-run the build command
 ```
 
+if you encounter setuptools error during build:
+
+'''colcon build: px4_msgs --- stderr: px4_msgs
+Traceback (most recent call last): File "/home/rajeev-gupta/ros2/ws_ros2/build/px4_msgs/ament_cmake_python/px4_msgs/setup.py", line 4, in setup('''
+
+Try: 
+ '''pip list | grep packaging'''
+ if the version of packaging is <22.0, please upgrade it to 22.0
+
+ '''pip install packaging==22.0'''
+
+Rebuild workspace.
+
 ### 6. Installing Ggroundcontrol (GCS) :
 ```
 sudo usermod -a -G dialout $USER
