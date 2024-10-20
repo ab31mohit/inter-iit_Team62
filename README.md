@@ -1,5 +1,5 @@
 # Inter-IIT_Doc
-General Docs &amp; instructions for Inter-IIT IdeaForge PS
+General Docs &amp; instructions for Inter-IIT IdeaForge PS.
 
 ## PX4 Environment setup with ROS2 & Gazebo
 ROS2 humble should already be installed on ubuntu22.04. If not, then install it from [here](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
