@@ -1,5 +1,23 @@
 # Information about the issues during the installation:
 
+## changes in .bashrc file:
+##ROS2
+source /opt/ros/humble/setup.bash
+
+
+##PX4
+export PATH=$PATH:$HOME/.local/bin
+export GZ_VERSION=harmonic
+
+#### Note: the command below doesn't make much difference 
+export GZ_SIM_RESOURCE_PATH=$HOME/ros2/PX4-Autopilot/Tools/simulation/gz/models:$HOME/ros2/PX4-Autopilot/Tools/simulation/gz/worlds:$GZ_SIM_RESOURCE_PATH
+
+
+
+
+
+## issues
+
 1. Running bash script for px4 installation:
 
     WARNING: The scripts pyserial-miniterm and pyserial-ports are installed in '/home/rajeev-gupta/.local/bin' which is not on PATH.
