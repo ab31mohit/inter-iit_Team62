@@ -1,13 +1,15 @@
 # Inter-IIT_Doc
-General Docs &amp; instructions for Inter-IIT IdeaForge PS.
+General Docs &amp; instructions for Inter-IIT Tech Meet 13.0 (2024) High Prep PS - 1 (IdeaForge).
 
 ## PX4 Environment setup with ROS2 & Gazebo
-ROS2 humble should already be installed on ubuntu22.04. If not, then install it from [here](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
-### 1. Update linux packages :
+- ROS2 humble should already be installed on your ubuntu22.04 system. If not, then install it from [here](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html).
+
+### 1. First update the debian packages on your ubuntu :
 ```
 sudo apt update
 sudo apt upgrade -y
 ```
+
 ### 2. Install PX4 setup :
 ```
 cd ~
@@ -15,6 +17,7 @@ git clone https://github.com/PX4/PX4-Autopilot.git --recursive
 bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
 sudo reboot
 ```
+- Please make sure that there is no error while cloning the PX4-Autopilot repository as otherwise it will cause issues in further steps.
 
 ### 3. Install ROS2 dependencies :
 ```
@@ -37,37 +40,7 @@ sudo make install
 sudo ldconfig /usr/local/lib/
 ```
 
-### 5. Create a ros2 workspace with basic packages for px4 :
-```
-mkdir -p ~/inter-iit_ws/src/
-cd ~/inter-iit_ws/src/
-git clone https://github.com/PX4/px4_msgs.git
-git clone https://github.com/PX4/px4_ros_com.git
-cd ..
-colcon build
-echo 'source ~/inter-iit_ws/install/setup.bash' >> ~/.bashrc
-#if failed, re-run the build command
-```
-
-if you encounter setuptools error during build:
-
-```colcon build: px4_msgs --- stderr: px4_msgs
-Traceback (most recent call last): File "/home/rajeev-gupta/ros2/ws_ros2/build/px4_msgs/ament_cmake_python/px4_msgs/setup.py", line 4, in setup
-```
-
-Try: 
-```
-pip list | grep packaging
-```
-if the version of packaging is <22.0, please upgrade it to 22.0
-
-```
-pip install packaging==22.0
-```
-
-Rebuild workspace.
-
-### 6. Installing Ggroundcontrol (GCS) :
+### 5. Installing QGroundControl (GCS) :
 ```
 sudo usermod -a -G dialout $USER
 sudo apt-get remove modemmanager -y
@@ -76,33 +49,91 @@ sudo apt install libfuse2 -y
 sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
 cd ~
 ```
-
-Now download the app-image file from [here](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage).   
-Change the permissions to run the ground control file and run it.
+- Now download the app-image file from [here](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage) in your `/home/username/` directory.   
+- Change the executable permissions for GCS & try to run it
 ```
+cd ~
 chmod +x ./QGroundControl.AppImage
 ./QGroundControl.AppImage
 ```
-### 6. Testing the basic setup :
+Close the terminal (by interrupting with `ctrl + c`) to close the QGroundControl.
 
-Launch gazebo environment & SITL
+*`NOTE :`*    
+- We've created 2 different ros2 workspaces for keeping our environment clean.    
+- First workspace (PX4_ws) is for setting up the ros2 packages related to PX4 firmware on ubuntu 22.04.    
+- Second workspace (inter-iit_ws) is where our solution for this PS is implemented.    
+- Follow the upcoming steps to create both workspaces.
 
+### 6. Creating ros2 workspace with basic packages for px4 :
+```
+cd ~
+mkdir -p ~/PX4_ws/src/
+cd ~/PX4_ws/src/
+git clone https://github.com/PX4/px4_msgs.git
+git clone https://github.com/PX4/px4_ros_com.git
+cd ..
+colcon build
+echo 'source ~/PX4_ws/install/setup.bash' >> ~/.bashrc
+```
+- If build is failed, try building again.    
+- If you encounter this setuptools error during build :
+
+```colcon build: px4_msgs --- stderr: px4_msgs
+Traceback (most recent call last): File "/home/rajeev-gupta/ros2/ws_ros2/build/px4_msgs/ament_cmake_python/px4_msgs/setup.py", line 4, in setup
+```
+
+then try : 
+```
+pip list | grep packaging
+```
+if the version of packaging is <22.0, please upgrade it to 22.0
+
+```
+pip install packaging==22.0
+```
+Now try re-building the workspace.
+
+### 7. Testing the PX4 setup :
+
+- Build & launch the gazebo simulation with SITL
 ```
 cd ~/PX4-Autopilot
 make px4_sitl gz_x500
 ```   
 
-Run the XRCE-DDS Agent   
+- Run the XRCE-DDS Agent   
 ```
+cd ~/Micro-XRCE-DDS-Agent/build
 MicroXRCEAgent udp4 -p 8888
 ```
+- Launch QGroundControl (GCS)
+```
+cd ~ && ./QGroundControl.AppImage
+```
 
-In the SITL terminal, give the following command to arm & takeoff the drone
+- In the SITL terminal (the one from where you launched gazebo), run the following command to arm & takeoff the drone
 ```
 commander takeoff
 ```
+- Use the command `commander land` to land the drone.
 
-### 7. Running the PX4_Offboard control setup :
+
+### 8. Creating the `inter-iit_ws` where the solution is implemented :
+
+```
+cd ~
+mkdir -p ~/inter-iit_ws/src/
+cd ~/inter-iit_ws/src/
+git clone abc.git
+cd ..
+colcon build
+echo 'source ~/inter-iit_ws/install/setup.bash' >> ~/.bashrc
+```
+
+### 8. Testing the px4 offboard control:
+*Note :*    
+- This package is build by [ARK-Electronics](https://github.com/ARK-Electronics) which is an extension of [Jaeyoung-Lim](https://github.com/Jaeyoung-Lim)'s work.
+- This package is used in our work, just to understand how offboard control is happening with the drone.
 ```
 cd ~/inter-iit_ws/src
 git clone https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example.git
@@ -111,10 +142,13 @@ colcon build --packages-select px4_offboard
 source install/setup.bash
 ros2 launch px4_offboard offboard_velocity_control.launch.py
 ```
+- Now you can try commanding the drone using the teleoperation.
+
+
 ---
 ### Contributors :
-Mohit    
-Rajeev    
-Ronnit      
-Abhikankshit.
+[Mohit]()    
+[Rajeev](https://github.com/rajeev-gupta-bashrc)    
+[Ronnit](https://github.com/NULL300)      
+[Abhikankshit](https://github.com/OARSS)
 
