@@ -124,7 +124,7 @@ commander takeoff
 cd ~
 mkdir -p ~/inter-iit_ws/src/
 cd ~/inter-iit_ws/src/
-git clone abc.git
+git clone https://github.com/ab31mohit/Inter-IIT_IdeaForge-PS.git
 cd ..
 colcon build
 echo 'source ~/inter-iit_ws/install/setup.bash' >> ~/.bashrc
@@ -140,6 +140,14 @@ git clone https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example.git
 cd ..
 colcon build --packages-select px4_offboard
 source install/setup.bash
+```
+- Edit the content of `processes.py` to this
+<div align="center">
+  <img src="readme-media/processes.png" alt="processes.py file" />
+</div>    
+
+- Now launch the offboard setup file
+```
 ros2 launch px4_offboard offboard_velocity_control.launch.py
 ```
 - Now you can try commanding the drone using the teleoperation.
