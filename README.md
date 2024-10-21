@@ -215,7 +215,8 @@ ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{da
 
 ---
 ### Contributors :
-[Mohit]()    
-[Rajeev](https://github.com/rajeev-gupta-bashrc)    
-[Ronnit](https://github.com/NULL300)      
-[Abhikankshit](https://github.com/OARSS)
+Mohit    
+Rajeev    
+Ronnit      
+Abhikankshit.
+ 
