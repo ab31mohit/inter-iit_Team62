@@ -1,4 +1,4 @@
-# Inter-IIT_Doc
+# Inter-IIT_IdeaForge-PS
 General Docs &amp; instructions for Inter-IIT IdeaForge PS.
 
 ## PX4 Environment setup with ROS2 & Gazebo
@@ -97,6 +97,12 @@ Run the XRCE-DDS Agent
 MicroXRCEAgent udp4 -p 8888
 ```
 
+Launch the QGroundControl, navigate to the directory where it is installed:
+```
+./QGroundControl.AppImage
+```
+
+
 In the SITL terminal, give the following command to arm & takeoff the drone
 ```
 commander takeoff
@@ -108,9 +114,32 @@ cd ~/inter-iit_ws/src
 git clone https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example.git
 cd ..
 colcon build --packages-select px4_offboard
-source install/setup.bash
 ros2 launch px4_offboard offboard_velocity_control.launch.py
 ```
+---
+
+### 8. Simulating motor failure : 
+Clone this repository in your interiit_ws
+
+```
+cd ~/inter-iit_ws/src
+git clone git@github.com:ab31mohit/Inter-IIT_IdeaForge-PS.git
+cd ..
+colcon build --packages-select 
+```
+
+Now follow step 6 to launch and hover the drone. Ater that launch a new terminal and run the commands below:
+
+```
+```
+
+```
+```
+
+You should see one motor stops working. 
+
+
+
 ---
 ### Contributors :
 Mohit    
