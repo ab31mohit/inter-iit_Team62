@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 # Inter-IIT_Doc
 General Docs &amp; instructions for Inter-IIT Tech Meet 13.0 (2024) High Prep PS - 1 (IdeaForge).
+=======
+# Inter-IIT_IdeaForge-PS
+General Docs &amp; instructions for Inter-IIT IdeaForge PS.
+>>>>>>> b914093 (added px4_drone_ros_control ros pkg and implemented motor failure)
 
 ## PX4 Environment setup with ROS2 & Gazebo
 - ROS2 humble should already be installed on your ubuntu22.04 system. If not, then install it from [here](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html).
@@ -111,7 +116,17 @@ MicroXRCEAgent udp4 -p 8888
 cd ~ && ./QGroundControl.AppImage
 ```
 
+<<<<<<< HEAD
 - In the SITL terminal (the one from where you launched gazebo), run the following command to arm & takeoff the drone
+=======
+Launch the QGroundControl, navigate to the directory where it is installed:
+```
+./QGroundControl.AppImage
+```
+
+
+In the SITL terminal, give the following command to arm & takeoff the drone
+>>>>>>> b914093 (added px4_drone_ros_control ros pkg and implemented motor failure)
 ```
 commander takeoff
 ```
@@ -151,6 +166,30 @@ source install/setup.bash
 ros2 launch px4_offboard offboard_velocity_control.launch.py
 ```
 - Now you can try commanding the drone using the teleoperation.
+
+
+---
+
+### 8. Simulating motor failure : 
+Clone this repository in your interiit_ws
+
+```
+cd ~/inter-iit_ws/src
+git clone git@github.com:ab31mohit/Inter-IIT_IdeaForge-PS.git
+cd ..
+colcon build --packages-select 
+```
+
+Now follow step 6 to launch and hover the drone. Ater that launch a new terminal and run the commands below:
+
+```
+```
+
+```
+```
+
+You should see one motor stops working. 
+
 
 
 ---
