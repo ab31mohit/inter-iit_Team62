@@ -1,5 +1,5 @@
-# Inter-IIT_Doc
-General Docs &amp; instructions for Inter-IIT Tech Meet 13.0 (2024) High Prep PS - 1 (IdeaForge).
+# Inter-IIT_IdeaForge-PS
+General Docs &amp; instructions for Inter-IIT IdeaForge PS.
 
 ## PX4 Environment setup with ROS2 & Gazebo
 - ROS2 humble should already be installed on your ubuntu22.04 system. If not, then install it from [here](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html).
@@ -110,12 +110,14 @@ make px4_sitl gz_x500
 cd ~/Micro-XRCE-DDS-Agent/build
 MicroXRCEAgent udp4 -p 8888
 ```
-- Launch QGroundControl (GCS)
+
+Launch the QGroundControl, navigate to the directory where it is installed:
 ```
-cd ~ && ./QGroundControl.AppImage
+./QGroundControl.AppImage
 ```
 
-- In the SITL terminal (the one from where you launched gazebo), run the following command to arm & takeoff the drone
+
+In the SITL terminal, give the following command to arm & takeoff the drone
 ```
 commander takeoff
 ```
@@ -143,27 +145,30 @@ cd ~/inter-iit_ws/src
 git clone https://github.com/ARK-Electronics/ROS2_PX4_Offboard_Example.git
 cd ..
 colcon build --packages-select px4_offboard
-source install/setup.bash
-```
-- Edit the content of `processes.py` to this
-<div align="center">
-  <img src="readme-media/processes.png" alt="processes.py file" />
-</div>    
-
-- Now launch the offboard setup file
-```
-source install/setup.bash
-```
-- Edit the content of `processes.py` to this
-<div align="center">
-  <img src="readme-media/processes.png" alt="processes.py file" />
-</div>    
-
-- Now launch the offboard setup file
-```
 ros2 launch px4_offboard offboard_velocity_control.launch.py
 ```
-- Now you can try commanding the drone using the teleoperation.
+---
+
+### 8. Simulating motor failure : 
+Clone this repository in your interiit_ws
+
+```
+cd ~/inter-iit_ws/src
+git clone git@github.com:ab31mohit/Inter-IIT_IdeaForge-PS.git
+cd ..
+colcon build --packages-select 
+```
+
+Now follow step 6 to launch and hover the drone. Ater that launch a new terminal and run the commands below:
+
+```
+```
+
+```
+```
+
+You should see one motor stops working. 
+
 
 
 ### 10. Simulating motor failure : 
