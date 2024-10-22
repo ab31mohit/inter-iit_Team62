@@ -17,9 +17,7 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     """Generate a launch description for the quadcopter."""
-    pkg_project_bringup = get_package_share_directory("px4_drone_ros_control")
-    pkg_ros_gz_sim = get_package_share_directory("ros_gz_sim")
-    
+    pkg_project_bringup = get_package_share_directory("px4_drone_ros_control")    
     ros2_gz_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
