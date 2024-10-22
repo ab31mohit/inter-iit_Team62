@@ -130,7 +130,7 @@ colcon build
 echo 'source ~/inter-iit_ws/install/setup.bash' >> ~/.bashrc
 ```
 
-### 8. Testing the px4 offboard control:
+### 9. Testing the px4 offboard control:
 *Note :*    
 - This package is build by [ARK-Electronics](https://github.com/ARK-Electronics) which is an extension of [Jaeyoung-Lim](https://github.com/Jaeyoung-Lim)'s work.
 - This package is used in our work, just to understand how offboard control is happening with the drone.
@@ -153,7 +153,7 @@ ros2 launch px4_offboard offboard_velocity_control.launch.py
 - Now you can try commanding the drone using the teleoperation.
 
 
-### 9. Simulating motor failure : 
+### 10. Simulating motor failure : 
 
 #### Approach: 
 - PX4 SITL sends motor pwm values over the gz topic _"/x500_0/command/motor_speed"_ .
