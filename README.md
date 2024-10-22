@@ -163,6 +163,12 @@ ros2 launch px4_offboard offboard_velocity_control.launch.py
 - We subscribe at _"/x500_0/command/motor_speed"_ topic and make changes in the pwm values and then publish at _"/x500_0/command/motor_vel"_ .
 
 #### Implementaion:
+
+- Install ros-gz-bridge if not installed already: 
+```
+sudo apt-get install ros-humble-ros-gzharmonic
+```
+
 ```
 cd ~/PX4-Autopilot/Tools/simulation/gz/models/x500
 ```
@@ -176,11 +182,13 @@ cd ~/PX4-Autopilot/Tools/simulation/gz/models/x500
 <commandSubTopic>command/motor_vel</commandSubTopic>
 ```
 
-- Now follow step 7 to launch and hover the drone. Ater that launch a new terminal and run the commands below:
+- Now follow step 7 to launch and hover the drone.
+- You'll notice that the drone isn't flying, because we've changed the topics. Ater that launch a new terminal and run the commands below:
 
 ```
 ros2 launch px4_drone_ros_control  gz_px4_bridge.launch.py
 ```
+- You should now see the drone is flying. 
 - This re-routes PX4 msgs to our _motor_command_bypass_node_ node which can alter the pwm messages, this node subscribes an int value (motor index from 0 to 3), if received it sets the pwm value to 0 for that motor index. 
 - Updated pwm values are sent to the drone. 
 
