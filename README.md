@@ -189,7 +189,8 @@ ros2 launch px4_drone_ros_control  gz_px4_bridge.launch.py
 ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{data: 0}"
 ```
 
-- You should see one motor stops working. If you again send the same command then it toggles the motor's state and the motor will start working again. 
+- You should see one motor stops working. 
+- If you again send the same command then it toggles the motor's state and the motor will start working again. 
 
 ---
 ### Contributors :
