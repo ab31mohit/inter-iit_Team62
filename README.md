@@ -231,40 +231,40 @@ ros2 launch px4_offboard offboard_velocity_control.launch.py
 ### 9. Simulating motor failure : 
 
 #### Approach: 
-PX4 SITL sends motor pwm values over the gz topic "/x500_0/command/motor_speed".
-This is read by the MulticopterMotorModel plugin of the x_500 drone in simulation. 
-We change the subscription topic of x_500 drone to a custom topic "/x500_0/command/motor_vel".
-This will be used to send custom commands to the drone. 
-We subscribe at _"/x500_0/command/motor_speed"_ topic and make changes in the pwm values and then publish at _"/x500_0/command/motor_vel"_ 
+- PX4 SITL sends motor pwm values over the gz topic _"/x500_0/command/motor_speed"_ .
+- This is read by the MulticopterMotorModel plugin of the x_500 drone in simulation. 
+- We change the subscription topic of x_500 drone to a custom topic _"/x500_0/command/motor_vel"_ .
+- This will be used to send custom commands to the drone. 
+- We subscribe at _"/x500_0/command/motor_speed"_ topic and make changes in the pwm values and then publish at _"/x500_0/command/motor_vel"_ .
 
 #### Implementaion:
 ```
-cd ~/PX4-Autopilot/Tools/simulation/gz/models/x500/model.sdf
+cd ~/PX4-Autopilot/Tools/simulation/gz/models/x500
 ```
 
-For each motor plugin change the command topic from:
+- Open the model.sdf file. For each motor plugin, change the command topic from:
 ```
 <commandSubTopic>command/motor_speed</commandSubTopic>
 ```
-to 
+- to 
 ```
 <commandSubTopic>command/motor_vel</commandSubTopic>
 ```
 
-Now follow step 7 to launch and hover the drone. Ater that launch a new terminal and run the commands below:
+- Now follow step 7 to launch and hover the drone. Ater that launch a new terminal and run the commands below:
 
 ```
 ros2 launch px4_drone_ros_control  gz_px4_bridge.launch.py
 ```
-This re-routes PX4 msgs to our _motor_command_bypass_node node_ which can alter the pwm messages, this node subscribes an int value (motor index from 0 to 3), if received it sets the pwm value to 0 for that motor index. 
-Updated pwm values are sent to the drone. 
+- This re-routes PX4 msgs to our _motor_command_bypass_node_ node which can alter the pwm messages, this node subscribes an int value (motor index from 0 to 3), if received it sets the pwm value to 0 for that motor index. 
+- Updated pwm values are sent to the drone. 
 
-To toggle the failure/working state of the _i_ th motor put the index in the command below, for example for _i_ = 0:
+- To toggle the failure/working state of the _i_ th motor put the index in the command below, for example for _i_ = 0:
 ```
 ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{data: 0}"
 ```
 
-You should see one motor stops working. If you again send the same command then it toggles the motor's state and the motor will start working again. 
+- You should see one motor stops working. If you again send the same command then it toggles the motor's state and the motor will start working again. 
 
 ---
 ### Contributors :
