@@ -36,6 +36,9 @@ install(
 
 install(PROGRAMS
   scripts/motor_command_bypass_node.py
+  scripts/odometry_subscriber.py
+  scripts/data_plotter_node.py
+  scripts/launch_drone_env.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
