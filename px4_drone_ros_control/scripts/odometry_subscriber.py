@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import rclpy
+import rclpy.wait_for_message
 from rclpy.node import Node
 from px4_msgs.msg import VehicleOdometry
+from std_msgs.msg import Int16
 import numpy as np
 import csv
 import signal
@@ -13,19 +15,19 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPo
 def quaternion_to_rpy(w, x, y, z):
     """
     Convert quaternion to roll, pitch, and yaw (RPY) angles.
-    
+
     Parameters:
     - x: float, x component of the quaternion
     - y: float, y component of the quaternion
     - z: float, z component of the quaternion
     - w: float, w component of the quaternion
-    
+
     Returns:
     - roll: float, roll angle in radians
     - pitch: float, pitch angle in radians
     - yaw: float, yaw angle in radians
     """
-    
+
     # Roll (x-axis rotation)
     sinr_cosp = 2 * (w * x + y * z)
     cosr_cosp = 1 - 2 * (x * x + y * y)
@@ -46,60 +48,90 @@ def quaternion_to_rpy(w, x, y, z):
     return roll, pitch, yaw
 
 
-
 class OdometrySubscriber(Node):
     def __init__(self):
-        super().__init__('odometry_subscriber')
-        
+        super().__init__("odometry_subscriber")
+
         # Initialize class attributes
         self.timestamp = None
         self.x = self.y = self.z = 0.0
         self.vx = self.vy = self.vz = 0.0
         self.ax = self.ay = self.az = 0.0
         self.roll = self.pitch = self.yaw = 0.0
-        
+        self.failed_motor = 0
+
+        self.motor_failure = False
+
         # Previous velocities for acceleration calculation
         self.prev_vx = self.prev_vy = self.prev_vz = 0.0
         self.prev_timestamp = None
-        
+
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
-            depth=5
+            depth=5,
         )
-        
+
         # Create subscription with proper QoS
         self.subscription = self.create_subscription(
             VehicleOdometry,
-            '/fmu/out/vehicle_odometry',
+            "/fmu/out/vehicle_odometry",
             self.odometry_callback,
-            qos_profile)
-        
+            qos_profile,
+        )
+
+        self.subscription2 = self.create_subscription(
+            Int16,
+            "/drone_control/toggle_motor_fail_state",
+            self.motor_failure_callback,
+            10,
+        )
+
         # Initialize CSV file
-        self.log_directory = '/home/rajeev-gupta/ros2/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs'
-        self.csv_filename = '/odometry_data_0.csv'
+        self.log_directory = "/home/shravan/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs"
+        self.csv_filename = "/odometry_data_0.csv"
         if os.path.exists(self.log_directory + self.csv_filename):
             while os.path.exists(self.log_directory + self.csv_filename):
-                self.csv_filename = self.csv_filename[:-5] + str(int(self.csv_filename[-5])+1) + self.csv_filename[-4:]
-        self.csv_file = open(self.log_directory+self.csv_filename, 'w', newline='')
+                self.csv_filename = (
+                    self.csv_filename[:-5]
+                    + str(int(self.csv_filename[-5]) + 1)
+                    + self.csv_filename[-4:]
+                )
+        self.csv_file = open(self.log_directory + self.csv_filename, "w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
-        
+
         # Write header
-        self.csv_writer.writerow(['timestamp', 'x', 'y', 'z', 
-                                'vx', 'vy', 'vz', 
-                                'ax', 'ay', 'az', 
-                                'roll', 'pitch', 'yaw'])
-        
+        self.csv_writer.writerow(
+            [
+                "timestamp",
+                "x",
+                "y",
+                "z",
+                "vx",
+                "vy",
+                "vz",
+                "ax",
+                "ay",
+                "az",
+                "roll",
+                "pitch",
+                "yaw",
+                "failed_motor",
+            ]
+        )
+
         # Setup signal handler for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
-        
-        self.get_logger().info('Odometry subscriber started. Recording data to: ' + self.csv_filename)
+
+        self.get_logger().info(
+            "Odometry subscriber started. Recording data to: " + self.csv_filename
+        )
 
     def signal_handler(self, sig, frame):
         """Handle cleanup on shutdown"""
-        self.get_logger().info('Closing CSV file and shutting down...')
-        if hasattr(self, 'csv_file'):
+        self.get_logger().info("Closing CSV file and shutting down...")
+        if hasattr(self, "csv_file"):
             self.csv_file.close()
         sys.exit(0)
 
@@ -114,6 +146,9 @@ class OdometrySubscriber(Node):
             self.ax = (self.vx - self.prev_vx) / dt
             self.ay = (self.vy - self.prev_vy) / dt
             self.az = (self.vz - self.prev_vz) / dt
+
+    def motor_failure_callback(self, msg):
+        self.failed_motor = msg.data + 1
 
     def odometry_callback(self, msg):
         """Process incoming odometry messages"""
@@ -134,35 +169,51 @@ class OdometrySubscriber(Node):
         self.calculate_accelerations(msg.timestamp)
 
         # Convert quaternion to euler angles (roll, pitch, yaw)
-        self.roll, self.pitch, self.yaw = quaternion_to_rpy(msg.q[0], msg.q[1], msg.q[2], msg.q[3])
+        self.roll, self.pitch, self.yaw = quaternion_to_rpy(
+            msg.q[0], msg.q[1], msg.q[2], msg.q[3]
+        )
 
         # Convert angles to degrees
         self.roll = np.degrees(self.roll)
         self.pitch = np.degrees(self.pitch)
         self.yaw = np.degrees(self.yaw)
 
-        # Write data to CSV
-        self.csv_writer.writerow([
-            self.timestamp,
-            self.x, self.y, self.z,
-            self.vx, self.vy, self.vz,
-            self.ax, self.ay, self.az,
-            self.roll, self.pitch, self.yaw
-        ])
-        
-        self.get_logger().info(f'{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw]} - written to file')
-        
         # Update previous values for next acceleration calculation
         self.prev_vx = self.vx
         self.prev_vy = self.vy
         self.prev_vz = self.vz
         self.prev_timestamp = self.timestamp
 
+        # Write data to CSV
+        self.csv_writer.writerow(
+            [
+                self.timestamp,
+                self.x,
+                self.y,
+                self.z,
+                self.vx,
+                self.vy,
+                self.vz,
+                self.ax,
+                self.ay,
+                self.az,
+                self.roll,
+                self.pitch,
+                self.yaw,
+                self.failed_motor,
+            ]
+        )
+
+        self.get_logger().info(
+            f"{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw]} - written to file"
+        )
+
+
 def main(args=None):
     rclpy.init(args=args)
-    
+
     odometry_subscriber = OdometrySubscriber()
-    
+
     try:
         rclpy.spin(odometry_subscriber)
     except KeyboardInterrupt:
@@ -173,5 +224,6 @@ def main(args=None):
         odometry_subscriber.destroy_node()
         rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
