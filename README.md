@@ -200,7 +200,11 @@ ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{da
 - You should see one motor stops working. 
 - If you again send the same command then it toggles the motor's state and the motor will start working again. 
 
+- *Note* : You can also use the command below to launch the QGroundControl, gz_px4_bridge.launch.py and MicroXRCEAgent all in one terminal. 
+```
+ ros2 launch px4_drone_ros_control launch_sim_env.launch.py 
 ---
+
 ### Contributors :
 [Mohit]()    
 [Rajeev](https://github.com/rajeev-gupta-bashrc)    
