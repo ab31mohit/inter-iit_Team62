@@ -202,7 +202,9 @@ ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{da
 
 - *Note* : You can also use the command below to launch the QGroundControl, gz_px4_bridge.launch.py and MicroXRCEAgent all in one terminal. 
 ```
- ros2 launch px4_drone_ros_control launch_sim_env.launch.py 
+ros2 launch px4_drone_ros_control launch_sim_env.launch.py 
+```
+
 ---
 
 ### Contributors :
