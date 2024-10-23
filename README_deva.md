@@ -212,10 +212,3 @@ ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{da
 
 - You should see one motor stops working. 
 - If you again send the same command then it toggles the motor's state and the motor will start working again. 
-
----
-### Contributors :
-[Mohit]()    
-[Rajeev](https://github.com/rajeev-gupta-bashrc)    
-[Ronnit](https://github.com/NULL300)      
-[Abhikankshit](https://github.com/OARSS)
