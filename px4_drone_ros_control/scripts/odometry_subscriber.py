@@ -81,7 +81,7 @@ class OdometrySubscriber(Node):
             qos_profile,
         )
 
-        self.subscription2 = self.create_subscription(
+        self.subscription = self.create_subscription(
             Int16,
             "/drone_control/toggle_motor_fail_state",
             self.motor_failure_callback,
