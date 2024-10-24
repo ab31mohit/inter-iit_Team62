@@ -58,12 +58,13 @@ class OdometrySubscriber(Node):
         self.vx = self.vy = self.vz = 0.0
         self.ax = self.ay = self.az = 0.0
         self.roll = self.pitch = self.yaw = 0.0
+        self.roll_rate = self.pitch_rate = self.yaw_rate = 0.0
+        self.roll_acc = self.pitch_acc = self.yaw_acc = 0.0  # Angular accelerations
         self.failed_motor = 0
 
-        self.motor_failure = False
-
-        # Previous velocities for acceleration calculation
-        self.prev_vx = self.prev_vy = self.prev_vz = 0.0
+        # Previous values for rate and acceleration calculations (store in radians)
+        self.prev_roll_rad = self.prev_pitch_rad = self.prev_yaw_rad = 0.0
+        self.prev_roll_rate = self.prev_pitch_rate = self.prev_yaw_rate = 0.0  # In rad/s
         self.prev_timestamp = None
 
         qos_profile = QoSProfile(
@@ -73,7 +74,7 @@ class OdometrySubscriber(Node):
             depth=5,
         )
 
-        # Create subscription with proper QoS
+        # Create subscriptions
         self.subscription = self.create_subscription(
             VehicleOdometry,
             "/fmu/out/vehicle_odometry",
@@ -101,7 +102,7 @@ class OdometrySubscriber(Node):
         self.csv_file = open(self.log_directory + self.csv_filename, "w", newline="")
         self.csv_writer = csv.writer(self.csv_file)
 
-        # Write header
+        # Write header with new angular acceleration columns
         self.csv_writer.writerow(
             [
                 "timestamp",
@@ -117,71 +118,131 @@ class OdometrySubscriber(Node):
                 "roll",
                 "pitch",
                 "yaw",
+                "roll_rate",
+                "pitch_rate",
+                "yaw_rate",
+                "roll_acc",
+                "pitch_acc",
+                "yaw_acc",
                 "failed_motor",
             ]
         )
 
-        # Setup signal handler for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
-
         self.get_logger().info(
             "Odometry subscriber started. Recording data to: " + self.csv_filename
         )
 
     def signal_handler(self, sig, frame):
-        """Handle cleanup on shutdown"""
         self.get_logger().info("Closing CSV file and shutting down...")
         if hasattr(self, "csv_file"):
             self.csv_file.close()
         sys.exit(0)
 
     def calculate_accelerations(self, timestamp):
-        """Calculate accelerations from velocity changes"""
         if self.prev_timestamp is None:
             self.ax = self.ay = self.az = 0.0
             return
 
-        dt = (timestamp - self.prev_timestamp) * 1e-6  # Convert microseconds to seconds
+        dt = (timestamp - self.prev_timestamp) * 1e-6
         if dt > 0:
             self.ax = (self.vx - self.prev_vx) / dt
             self.ay = (self.vy - self.prev_vy) / dt
             self.az = (self.vz - self.prev_vz) / dt
 
+    def normalize_angle(self, angle):
+        """Normalize angle to be between -pi and pi"""
+        while angle > math.pi:
+            angle -= 2 * math.pi
+        while angle < -math.pi:
+            angle += 2 * math.pi
+        return angle
+
+    def calculate_angular_rate(self, current, previous, dt):
+        """Calculate angular rate accounting for wraparound"""
+        diff = self.normalize_angle(current - previous)
+        return diff / dt if dt > 0 else 0.0
+
+    def calculate_attitude_rates(self, timestamp, roll_rad, pitch_rad, yaw_rad):
+        """Calculate attitude rates from attitude changes in radians"""
+        if self.prev_timestamp is None:
+            self.roll_rate = self.pitch_rate = self.yaw_rate = 0.0
+            return
+
+        dt = (timestamp - self.prev_timestamp) * 1e-6  # Convert microseconds to seconds
+        if dt > 0:
+            # Calculate rates in radians/sec, handling wraparound
+            roll_rate_rad = self.calculate_angular_rate(roll_rad, self.prev_roll_rad, dt)
+            pitch_rate_rad = self.calculate_angular_rate(pitch_rad, self.prev_pitch_rad, dt)
+            yaw_rate_rad = self.calculate_angular_rate(yaw_rad, self.prev_yaw_rad, dt)
+
+            # Store rates in radians/sec for acceleration calculation
+            self.prev_roll_rate = roll_rate_rad
+            self.prev_pitch_rate = pitch_rate_rad
+            self.prev_yaw_rate = yaw_rate_rad
+
+            # Convert to degrees/sec for output
+            self.roll_rate = np.degrees(roll_rate_rad)
+            self.pitch_rate = np.degrees(pitch_rate_rad)
+            self.yaw_rate = np.degrees(yaw_rate_rad)
+
+    def calculate_angular_accelerations(self, timestamp, roll_rate_rad, pitch_rate_rad, yaw_rate_rad):
+        """Calculate angular accelerations from angular rates"""
+        if self.prev_timestamp is None:
+            self.roll_acc = self.pitch_acc = self.yaw_acc = 0.0
+            return
+
+        dt = (timestamp - self.prev_timestamp) * 1e-6  # Convert microseconds to seconds
+        if dt > 0:
+            # Calculate accelerations in radians/sec²
+            roll_acc_rad = (roll_rate_rad - self.prev_roll_rate) / dt
+            pitch_acc_rad = (pitch_rate_rad - self.prev_pitch_rate) / dt
+            yaw_acc_rad = (yaw_rate_rad - self.prev_yaw_rate) / dt
+
+            # Convert to degrees/sec² for output
+            self.roll_acc = np.degrees(roll_acc_rad)
+            self.pitch_acc = np.degrees(pitch_acc_rad)
+            self.yaw_acc = np.degrees(yaw_acc_rad)
+
     def motor_failure_callback(self, msg):
         self.failed_motor = msg.data + 1
 
     def odometry_callback(self, msg):
-        """Process incoming odometry messages"""
-        # Store timestamp
         self.timestamp = msg.timestamp
 
-        # Store position
-        self.x = msg.position[0]
-        self.y = msg.position[1]
-        self.z = msg.position[2]
-
-        # Store velocity
-        self.vx = msg.velocity[0]
-        self.vy = msg.velocity[1]
-        self.vz = msg.velocity[2]
+        # Store position and velocity
+        self.x, self.y, self.z = msg.position
+        self.vx, self.vy, self.vz = msg.velocity
 
         # Calculate accelerations
         self.calculate_accelerations(msg.timestamp)
 
-        # Convert quaternion to euler angles (roll, pitch, yaw)
-        self.roll, self.pitch, self.yaw = quaternion_to_rpy(
+        # Get current angles in radians
+        roll_rad, pitch_rad, yaw_rad = quaternion_to_rpy(
             msg.q[0], msg.q[1], msg.q[2], msg.q[3]
         )
 
-        # Convert angles to degrees
-        self.roll = np.degrees(self.roll)
-        self.pitch = np.degrees(self.pitch)
-        self.yaw = np.degrees(self.yaw)
+        # Calculate attitude rates (using radians)
+        self.calculate_attitude_rates(msg.timestamp, roll_rad, pitch_rad, yaw_rad)
 
-        # Update previous values for next acceleration calculation
+        # Calculate angular accelerations
+        self.calculate_angular_accelerations(msg.timestamp, 
+                                          np.radians(self.roll_rate),
+                                          np.radians(self.pitch_rate),
+                                          np.radians(self.yaw_rate))
+
+        # Store angles in degrees for output
+        self.roll = np.degrees(roll_rad)
+        self.pitch = np.degrees(pitch_rad)
+        self.yaw = np.degrees(yaw_rad)
+
+        # Update previous values
         self.prev_vx = self.vx
         self.prev_vy = self.vy
         self.prev_vz = self.vz
+        self.prev_roll_rad = roll_rad
+        self.prev_pitch_rad = pitch_rad
+        self.prev_yaw_rad = yaw_rad
         self.prev_timestamp = self.timestamp
 
         # Write data to CSV
@@ -200,12 +261,18 @@ class OdometrySubscriber(Node):
                 self.roll,
                 self.pitch,
                 self.yaw,
+                self.roll_rate,
+                self.pitch_rate,
+                self.yaw_rate,
+                self.roll_acc,
+                self.pitch_acc,
+                self.yaw_acc,
                 self.failed_motor,
             ]
         )
 
         self.get_logger().info(
-            f"{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw]} - written to file"
+            f"{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw, self.roll_rate, self.pitch_rate, self.yaw_rate, self.roll_acc, self.pitch_acc, self.yaw_acc, self.failed_motor]} - written to file"
         )
 
 

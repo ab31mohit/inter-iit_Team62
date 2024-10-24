@@ -104,7 +104,7 @@ class DataPlotterNode(Node):
         failed_motor_indices = data_limited.index[failed_motor_changes].tolist()
 
         # Create subplots for each measurement group
-        fig, axes = plt.subplots(4, 1, figsize=(15, 20))
+        fig, axes = plt.subplots(6, 1, figsize=(15, 20))
 
         # Position plots
         axes[0].plot(timestamp_seconds_limited, data_limited[["x", "y", "z"]])
@@ -125,8 +125,18 @@ class DataPlotterNode(Node):
             axes[1].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
 
         # Acceleration plots
-        axes[2].plot(timestamp_seconds_limited, data_limited[["ax", "ay", "az"]])
-        axes[2].set_title("Acceleration")
+        # axes[2].plot(timestamp_seconds_limited, data_limited[["ax", "ay", "az"]])
+        # axes[2].set_title("Acceleration")
+        # axes[2].set_ylabel("Acceleration (m/s²)")
+        # axes[2].legend(["ax", "ay", "az"])
+        # axes[2].grid(True)
+        # for idx in failed_motor_indices:
+        #     axes[2].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+
+        # Averaged acceleration plots
+        acc_avg = data_limited[["ax", "ay", "az"]].rolling(window=20).mean()
+        axes[2].plot(timestamp_seconds_limited, acc_avg)
+        axes[2].set_title("Acceleration (Averaged)")
         axes[2].set_ylabel("Acceleration (m/s²)")
         axes[2].legend(["ax", "ay", "az"])
         axes[2].grid(True)
@@ -142,8 +152,38 @@ class DataPlotterNode(Node):
         for idx in failed_motor_indices:
             axes[3].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
 
+        # Attitude rate plots
+        # axes[4].plot(timestamp_seconds_limited, data_limited[["roll_rate", "pitch_rate", "yaw_rate"]])
+        # axes[4].set_title("Attitude Rates")
+        # axes[4].set_ylabel("Rate (rad/s)")
+        # axes[4].legend(["roll_rate", "pitch_rate", "yaw_rate"])
+        # axes[4].grid(True)
+        # for idx in failed_motor_indices:
+        #     axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+
+        # Averaged attitude rate plots
+        rate_avg = data_limited[["roll_rate", "pitch_rate", "yaw_rate"]].rolling(window=20).mean()
+        axes[4].plot(timestamp_seconds_limited, rate_avg)
+        axes[4].set_title("Attitude Rates (Averaged)")
+        axes[4].set_ylabel("Rate (rad/s)")
+        axes[4].legend(["roll_rate", "pitch_rate", "yaw_rate"])
+        axes[4].grid(True)
+        for idx in failed_motor_indices:
+            axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+
+        #Averaged attitude acceleration plots
+        att_acc_avg = data_limited[["roll_acc", "pitch_acc", "yaw_acc"]].rolling(window=100).mean()
+        axes[5].plot(timestamp_seconds_limited, att_acc_avg)
+        axes[5].set_title("Attitude Acceleration (Averaged)")
+        axes[5].set_ylabel("Acceleration (rad/s²)")
+        axes[5].legend(["roll_acc", "pitch_acc", "yaw_acc"])
+        axes[5].grid(True)
+        for idx in failed_motor_indices:
+            axes[5].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+
         # Set common x-label
-        fig.text(0.5, 0.04, "Time (seconds)", ha="center", fontsize=12)
+        fig.text(0.5, 0.02, "Time (seconds)", ha="center", fontsize=12)
+
 
         # Adjust layout: Add space between subplots
         plt.tight_layout(rect=[0, 0.03, 1, 0.97])
