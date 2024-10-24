@@ -208,7 +208,7 @@ ros2 launch px4_drone_ros_control launch_sim_env.launch.py
 ---
 
 ### Contributors :
-[Mohit](https://github.com/ab31mohit/bandit)    
+[Mohit](https://github.com/ab31mohit)    
 [Rajeev](https://github.com/rajeev-gupta-bashrc)    
 [Ronnit](https://github.com/NULL300)      
 [Abhikankshit](https://github.com/OARSS)
