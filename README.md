@@ -79,7 +79,7 @@ echo 'source ~/PX4_ws/install/setup.bash' >> ~/.bashrc
 - If you encounter this setuptools error during build :
 
 ```colcon build: px4_msgs --- stderr: px4_msgs
-Traceback (most recent call last): File "/home/rajeev-gupta/ros2/ws_ros2/build/px4_msgs/ament_cmake_python/px4_msgs/setup.py", line 4, in setup
+Traceback (most recent call last): File "$HOME/ros2/ws_ros2/build/px4_msgs/ament_cmake_python/px4_msgs/setup.py", line 4, in setup
 ```
 
 then try : 
@@ -130,7 +130,7 @@ colcon build
 echo 'source ~/inter-iit_ws/install/setup.bash' >> ~/.bashrc
 ```
 
-### 8. Testing the px4 offboard control:
+### 9. Testing the px4 offboard control:
 *Note :*    
 - This package is build by [ARK-Electronics](https://github.com/ARK-Electronics) which is an extension of [Jaeyoung-Lim](https://github.com/Jaeyoung-Lim)'s work.
 - This package is used in our work, just to understand how offboard control is happening with the drone.
@@ -153,10 +153,62 @@ ros2 launch px4_offboard offboard_velocity_control.launch.py
 - Now you can try commanding the drone using the teleoperation.
 
 
+### 10. Simulating motor failure : 
+
+#### Approach: 
+- PX4 SITL sends motor pwm values over the gz topic _"/x500_0/command/motor_speed"_ .
+- This is read by the MulticopterMotorModel plugin of the x_500 drone in simulation. 
+- We change the subscription topic of x_500 drone to a custom topic _"/x500_0/command/motor_vel"_ .
+- This will be used to send custom commands to the drone. 
+- We subscribe at _"/x500_0/command/motor_speed"_ topic and make changes in the pwm values and then publish at _"/x500_0/command/motor_vel"_ .
+
+#### Implementaion:
+
+- Install ros-gz-bridge if not installed already: 
+```
+sudo apt-get install ros-humble-ros-gzharmonic
+```
+
+```
+cd ~/PX4-Autopilot/Tools/simulation/gz/models/x500
+```
+
+- Open the model.sdf file. For each motor plugin, change the command topic from:
+```
+<commandSubTopic>command/motor_speed</commandSubTopic>
+```
+- to 
+```
+<commandSubTopic>command/motor_vel</commandSubTopic>
+```
+
+- Now follow step 7 to launch and hover the drone.
+- You'll notice that the drone isn't flying, because we've changed the topics. Ater that launch a new terminal and run the commands below:
+
+```
+ros2 launch px4_drone_ros_control  gz_px4_bridge.launch.py
+```
+- You should now see the drone is flying. 
+- This re-routes PX4 msgs to our _motor_command_bypass_node_ node which can alter the pwm messages, this node subscribes an int value (motor index from 0 to 3), if received it sets the pwm value to 0 for that motor index. 
+- Updated pwm values are sent to the drone. 
+
+- To toggle the failure/working state of the _i_ th motor put the index in the command below, for example for _i_ = 0:
+```
+ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{data: 0}"
+```
+
+- You should see one motor stops working. 
+- If you again send the same command then it toggles the motor's state and the motor will start working again. 
+
+- *Note* : You can also use the command below to launch the QGroundControl, gz_px4_bridge.launch.py and MicroXRCEAgent all in one terminal. 
+```
+ros2 launch px4_drone_ros_control launch_sim_env.launch.py 
+```
+
 ---
+
 ### Contributors :
 [Mohit]()    
 [Rajeev](https://github.com/rajeev-gupta-bashrc)    
 [Ronnit](https://github.com/NULL300)      
 [Abhikankshit](https://github.com/OARSS)
-
