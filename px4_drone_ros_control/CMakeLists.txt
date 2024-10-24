@@ -38,7 +38,11 @@ install(PROGRAMS
   scripts/motor_command_bypass_node.py
   scripts/odometry_subscriber.py
   scripts/data_plotter_node.py
-  scripts/launch_drone_env.py
+  scripts/launch_drone.py
+
+  scripts/QGCS_launcher.py
+  scripts/MicroXRCEAgent_launcher.py
+  
   DESTINATION lib/${PROJECT_NAME}
 )
 
