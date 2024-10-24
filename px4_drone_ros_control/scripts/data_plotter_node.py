@@ -6,12 +6,32 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+def find_package_directory(package_name):
+    # Get the AMENT_PREFIX_PATH environment variable
+    ament_prefix_path = os.getenv('AMENT_PREFIX_PATH', '')
+
+    if not ament_prefix_path:
+        return "AMENT_PREFIX_PATH is not set. ROS 2 might not be sourced."
+
+    # Split the AMENT_PREFIX_PATH if it contains multiple paths
+    package_directories = ament_prefix_path.split(':')
+
+    # Search for the package in each directory
+    for package_dir in package_directories:
+        # Typically, packages are located under `share/package_name`
+        possible_path = os.path.join(package_dir, 'share', package_name)
+        if os.path.isdir(possible_path):
+            return package_dir[:-(len(package_name)+9)]
+
+    return f"Package '{package_name}' not found in AMENT_PREFIX_PATH."
+
 class DataPlotterNode(Node):
     def __init__(self):
         super().__init__('data_plotter_node')
         
         # Declare parameters
-        self.declare_parameter('data_directory', '/home/rajeev-gupta/ros2/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs')
+        self.workspace_dir = find_package_directory('px4_drone_ros_control')
+        self.declare_parameter('data_directory', self.workspace_dir + '/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs')
         
         # Get parameters
         self.directory_path = self.get_parameter('data_directory').value

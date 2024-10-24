@@ -79,7 +79,7 @@ echo 'source ~/PX4_ws/install/setup.bash' >> ~/.bashrc
 - If you encounter this setuptools error during build :
 
 ```colcon build: px4_msgs --- stderr: px4_msgs
-Traceback (most recent call last): File "/home/rajeev-gupta/ros2/ws_ros2/build/px4_msgs/ament_cmake_python/px4_msgs/setup.py", line 4, in setup
+Traceback (most recent call last): File "$HOME/ros2/ws_ros2/build/px4_msgs/ament_cmake_python/px4_msgs/setup.py", line 4, in setup
 ```
 
 then try : 

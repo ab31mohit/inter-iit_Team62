@@ -9,6 +9,24 @@ import signal
 import sys, math, os
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 
+def find_package_directory(package_name):
+    # Get the AMENT_PREFIX_PATH environment variable
+    ament_prefix_path = os.getenv('AMENT_PREFIX_PATH', '')
+
+    if not ament_prefix_path:
+        return "AMENT_PREFIX_PATH is not set. ROS 2 might not be sourced."
+
+    # Split the AMENT_PREFIX_PATH if it contains multiple paths
+    package_directories = ament_prefix_path.split(':')
+
+    # Search for the package in each directory
+    for package_dir in package_directories:
+        # Typically, packages are located under `share/package_name`
+        possible_path = os.path.join(package_dir, 'share', package_name)
+        if os.path.isdir(possible_path):
+            return package_dir[:-(len(package_name)+9)]
+
+    return f"Package '{package_name}' not found in AMENT_PREFIX_PATH."
 
 def quaternion_to_rpy(w, x, y, z):
     """
@@ -77,7 +95,8 @@ class OdometrySubscriber(Node):
             qos_profile)
         
         # Initialize CSV file
-        self.log_directory = '/home/rajeev-gupta/ros2/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs'
+        self.workspace_dir = find_package_directory('px4_drone_ros_control')
+        self.log_directory = self.workspace_dir + '/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs'
         self.csv_filename = '/odometry_data_0.csv'
         if os.path.exists(self.log_directory + self.csv_filename):
             while os.path.exists(self.log_directory + self.csv_filename):
@@ -94,7 +113,7 @@ class OdometrySubscriber(Node):
         # Setup signal handler for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
         
-        self.get_logger().info('Odometry subscriber started. Recording data to: ' + self.csv_filename)
+        self.get_logger().info('Odometry subscriber started. Recording data to: ' + self.log_directory+self.csv_filename)
 
     def signal_handler(self, sig, frame):
         """Handle cleanup on shutdown"""
