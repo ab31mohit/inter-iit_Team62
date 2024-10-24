@@ -14,10 +14,7 @@ class TerminalLauncherNode(Node):
 
         # Store the commands to be executed in different tabs
         self.commands = [
-            "cd ~/PX4-Autopilot && make px4_sitl gz_x500",  # Tab 2
-            "MicroXRCEAgent udp4 -p 8888",  # Tab 1
-            "cd ~/Downloads && ./QGroundControl.AppImage",  # Tab 3
-            "ros2 launch px4_drone_ros_control gz_px4_bridge.launch.py",  # Tab 4
+            "cd ~/PX4-Autopilot && make px4_sitl gz_x500",
         ]
 
     def launch_terminals_callback(self):
