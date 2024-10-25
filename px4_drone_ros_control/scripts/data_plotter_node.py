@@ -71,6 +71,8 @@ class DataPlotterNode(Node):
         file_path = os.path.join(self.directory_path, self.selected_file)
         try:
             self.data = pd.read_csv(file_path)
+            # clean data by removing rows with lower timestamp than the first row
+            self.data = self.data[self.data["timestamp"] >= self.data["timestamp"].iloc[0]]
             self.get_logger().info(f"Data shape: {self.data.shape}")
             self.get_logger().info(f"Columns: {self.data.columns.tolist()}")
             return True
@@ -100,11 +102,14 @@ class DataPlotterNode(Node):
         timestamp_seconds_limited = timestamp_seconds.loc[:max_vz_index]
 
         # Identify the indices where the failed_motor changes from 0 to non-zero
-        failed_motor_changes = data_limited["failed_motor"].ne(0).astype(int).diff().eq(1)
+        failed_motor_changes = data_limited["failed_motor"].ne(-1).astype(int).diff().eq(1)
         failed_motor_indices = data_limited.index[failed_motor_changes].tolist()
 
         # Create subplots for each measurement group
-        fig, axes = plt.subplots(6, 1, figsize=(15, 20))
+        fig, axes = plt.subplots(5, 1, figsize=(15, 20))
+
+        # Set common title
+        fig.suptitle(f"Failed Motor: {data_limited['failed_motor'].iloc[-1]}", fontsize=16) 
 
         # Position plots
         axes[0].plot(timestamp_seconds_limited, data_limited[["x", "y", "z"]])
@@ -134,7 +139,7 @@ class DataPlotterNode(Node):
         #     axes[2].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
 
         # Averaged acceleration plots
-        acc_avg = data_limited[["ax", "ay", "az"]].rolling(window=20).mean()
+        acc_avg = data_limited[["ax", "ay", "az"]].rolling(window=20).mean().fillna(0)
         axes[2].plot(timestamp_seconds_limited, acc_avg)
         axes[2].set_title("Acceleration (Averaged)")
         axes[2].set_ylabel("Acceleration (m/s²)")
@@ -162,7 +167,7 @@ class DataPlotterNode(Node):
         #     axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
 
         # Averaged attitude rate plots
-        rate_avg = data_limited[["roll_rate", "pitch_rate", "yaw_rate"]].rolling(window=20).mean()
+        rate_avg = data_limited[["roll_rate", "pitch_rate", "yaw_rate"]].rolling(window=20).mean().fillna(0)
         axes[4].plot(timestamp_seconds_limited, rate_avg)
         axes[4].set_title("Attitude Rates (Averaged)")
         axes[4].set_ylabel("Rate (rad/s)")
@@ -170,16 +175,6 @@ class DataPlotterNode(Node):
         axes[4].grid(True)
         for idx in failed_motor_indices:
             axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
-
-        #Averaged attitude acceleration plots
-        att_acc_avg = data_limited[["roll_acc", "pitch_acc", "yaw_acc"]].rolling(window=100).mean()
-        axes[5].plot(timestamp_seconds_limited, att_acc_avg)
-        axes[5].set_title("Attitude Acceleration (Averaged)")
-        axes[5].set_ylabel("Acceleration (rad/s²)")
-        axes[5].legend(["roll_acc", "pitch_acc", "yaw_acc"])
-        axes[5].grid(True)
-        for idx in failed_motor_indices:
-            axes[5].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
 
         # Set common x-label
         fig.text(0.5, 0.02, "Time (seconds)", ha="center", fontsize=12)
