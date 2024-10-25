@@ -205,6 +205,10 @@ ros2 topic pub -1 /drone_control/toggle_motor_fail_state std_msgs/msg/Int16 "{da
 ros2 launch px4_drone_ros_control launch_sim_env.launch.py 
 ```
 
+## Creating your custom PX4-module
+Follow this doc [creating px4 module](px4_modules/modules_README.md) to create your own PX4 Module & compile it in px4 firmware.
+
+
 ---
 
 ### Contributors :
