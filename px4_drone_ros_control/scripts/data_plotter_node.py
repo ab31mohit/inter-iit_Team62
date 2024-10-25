@@ -101,15 +101,24 @@ class DataPlotterNode(Node):
         data_limited = self.data.loc[:max_vz_index]
         timestamp_seconds_limited = timestamp_seconds.loc[:max_vz_index]
 
-        # Identify the indices where the failed_motor changes from 0 to non-zero
+        # Identify the indices where the failed_motor changes from -1 to positive
         failed_motor_changes = data_limited["failed_motor"].ne(-1).astype(int).diff().eq(1)
         failed_motor_indices = data_limited.index[failed_motor_changes].tolist()
+
+        # Identify the indices where the detected_motor_failure changes from -1 to positive
+        detected_motor_failure_changes = data_limited["detected_motor_failure"].ne(-1).astype(int).diff().eq(1)
+        detected_motor_failure_indices = data_limited.index[detected_motor_failure_changes].tolist()
 
         # Create subplots for each measurement group
         fig, axes = plt.subplots(5, 1, figsize=(15, 20))
 
         # Set common title
-        fig.suptitle(f"Failed Motor: {data_limited['failed_motor'].iloc[-1]}", fontsize=16) 
+        if len(failed_motor_indices) and len(detected_motor_failure_indices):
+            delay_in_detection = (self.data["timestamp"].iloc[detected_motor_failure_indices[0]] - self.data["timestamp"].iloc[failed_motor_indices[0]]) * 1e-6
+            fig.suptitle(f"Failed Motor: {data_limited['failed_motor'].iloc[-1]}    Detected Motor Failure: {data_limited['detected_motor_failure'].iloc[-1]} \n Delay in Detection: {delay_in_detection:.3f}s") 
+        else:
+            delay_in_detection = "N/A"
+            fig.suptitle(f"Failed Motor: {data_limited['failed_motor'].iloc[-1]}    Detected Motor Failure: {data_limited['detected_motor_failure'].iloc[-1]} \n Delay in Detection: {delay_in_detection}")
 
         # Position plots
         axes[0].plot(timestamp_seconds_limited, data_limited[["x", "y", "z"]])
@@ -119,6 +128,8 @@ class DataPlotterNode(Node):
         axes[0].grid(True)
         for idx in failed_motor_indices:
             axes[0].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+        for idx in detected_motor_failure_indices:
+            axes[0].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Velocity plots
         axes[1].plot(timestamp_seconds_limited, data_limited[["vx", "vy", "vz"]])
@@ -128,6 +139,8 @@ class DataPlotterNode(Node):
         axes[1].grid(True)
         for idx in failed_motor_indices:
             axes[1].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+        for idx in detected_motor_failure_indices:
+            axes[1].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Acceleration plots
         # axes[2].plot(timestamp_seconds_limited, data_limited[["ax", "ay", "az"]])
@@ -147,6 +160,8 @@ class DataPlotterNode(Node):
         axes[2].grid(True)
         for idx in failed_motor_indices:
             axes[2].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+        for idx in detected_motor_failure_indices:
+            axes[2].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Attitude plots
         axes[3].plot(timestamp_seconds_limited, data_limited[["roll", "pitch", "yaw"]])
@@ -156,6 +171,8 @@ class DataPlotterNode(Node):
         axes[3].grid(True)
         for idx in failed_motor_indices:
             axes[3].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+        for idx in detected_motor_failure_indices:
+            axes[3].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Attitude rate plots
         # axes[4].plot(timestamp_seconds_limited, data_limited[["roll_rate", "pitch_rate", "yaw_rate"]])
@@ -175,6 +192,8 @@ class DataPlotterNode(Node):
         axes[4].grid(True)
         for idx in failed_motor_indices:
             axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
+        for idx in detected_motor_failure_indices:
+            axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Set common x-label
         fig.text(0.5, 0.02, "Time (seconds)", ha="center", fontsize=12)
