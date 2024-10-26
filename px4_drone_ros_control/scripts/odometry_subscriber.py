@@ -75,9 +75,11 @@ class OdometrySubscriber(Node):
         self.vx = self.vy = self.vz = 0.0
         self.ax = self.ay = self.az = 0.0
         self.roll = self.pitch = self.yaw = 0.0
+        self.roll_dot = self.pitch_dot = self.yaw_dot = 0.0
         
         # Previous velocities for acceleration calculation
         self.prev_vx = self.prev_vy = self.prev_vz = 0.0
+        self.prev_roll_dot = self.prev_pitch_dot = self.prev_yaw_dot = 0.0
         self.prev_timestamp = None
         
         qos_profile = QoSProfile(
@@ -108,7 +110,9 @@ class OdometrySubscriber(Node):
         self.csv_writer.writerow(['timestamp', 'x', 'y', 'z', 
                                 'vx', 'vy', 'vz', 
                                 'ax', 'ay', 'az', 
-                                'roll', 'pitch', 'yaw'])
+                                'roll', 'pitch', 'yaw',
+                                'roll_dot', 'pitch_dot', 'yaw_dot',
+                                'roll_double_dot', 'pitch_double_dot', 'yaw_double_dot'])
         
         # Setup signal handler for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -126,6 +130,7 @@ class OdometrySubscriber(Node):
         """Calculate accelerations from velocity changes"""
         if self.prev_timestamp is None:
             self.ax = self.ay = self.az = 0.0
+            self.roll_double_dot = self.pitch_double_dot = self.yaw_double_dot = 0.0
             return
 
         dt = (timestamp - self.prev_timestamp) * 1e-6  # Convert microseconds to seconds
@@ -133,6 +138,9 @@ class OdometrySubscriber(Node):
             self.ax = (self.vx - self.prev_vx) / dt
             self.ay = (self.vy - self.prev_vy) / dt
             self.az = (self.vz - self.prev_vz) / dt
+            self.roll_double_dot = (self.roll_dot - self.prev_roll_dot) / dt
+            self.pitch_double_dot = (self.pitch_dot - self.prev_pitch_dot) / dt
+            self.yaw_double_dot = (self.yaw_dot - self.prev_yaw_dot) / dt
 
     def odometry_callback(self, msg):
         """Process incoming odometry messages"""
@@ -148,6 +156,11 @@ class OdometrySubscriber(Node):
         self.vx = msg.velocity[0]
         self.vy = msg.velocity[1]
         self.vz = msg.velocity[2]
+
+        # Store angular velocity
+        self.roll_dot = msg.angular_velocity[0]
+        self.pitch_dot = msg.angular_velocity[1]
+        self.yaw_dot = msg.angular_velocity[2]
 
         # Calculate accelerations
         self.calculate_accelerations(msg.timestamp)
@@ -166,15 +179,20 @@ class OdometrySubscriber(Node):
             self.x, self.y, self.z,
             self.vx, self.vy, self.vz,
             self.ax, self.ay, self.az,
-            self.roll, self.pitch, self.yaw
+            self.roll, self.pitch, self.yaw,
+            self.roll_dot, self.pitch_dot, self.yaw_dot,
+            self.roll_double_dot, self.pitch_double_dot, self.yaw_double_dot
         ])
         
-        self.get_logger().info(f'{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw]} - written to file')
+        self.get_logger().info(f'{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw, self.roll_dot, self.pitch_dot, self.yaw_dot, self.roll_double_dot, self.pitch_double_dot, self.yaw_double_dot]} - written to file')
         
         # Update previous values for next acceleration calculation
         self.prev_vx = self.vx
         self.prev_vy = self.vy
         self.prev_vz = self.vz
+        self.prev_roll_dot = self.roll_dot
+        self.prev_pitch_dot = self.pitch_dot
+        self.prev_yaw_dot = self.yaw_dot
         self.prev_timestamp = self.timestamp
 
 def main(args=None):
