@@ -101,24 +101,32 @@ class DataPlotterNode(Node):
         data_limited = self.data.loc[:max_vz_index]
         timestamp_seconds_limited = timestamp_seconds.loc[:max_vz_index]
 
-        # Identify the indices where the failed_motor changes from -1 to positive
-        failed_motor_changes = data_limited["failed_motor"].ne(-1).astype(int).diff().eq(1)
-        failed_motor_indices = data_limited.index[failed_motor_changes].tolist()
+        # Identify the indices where the injected_failure changes from -1 to positive
+        injected_failure_changes = data_limited["injected_failure"].ne(-1).astype(int).diff().eq(1)
+        injected_failure_indices = data_limited.index[injected_failure_changes].tolist()
 
-        # Identify the indices where the detected_motor_failure changes from -1 to positive
-        detected_motor_failure_changes = data_limited["detected_motor_failure"].ne(-1).astype(int).diff().eq(1)
-        detected_motor_failure_indices = data_limited.index[detected_motor_failure_changes].tolist()
+        # Identify the indices where the detected_failure changes from -1 to positive
+        detected_failure_changes = data_limited["detected_failure"].ne(-1).astype(int).diff().eq(1)
+        detected_failure_indices = data_limited.index[detected_failure_changes].tolist()
 
         # Create subplots for each measurement group
         fig, axes = plt.subplots(5, 1, figsize=(15, 20))
 
         # Set common title
-        if len(failed_motor_indices) and len(detected_motor_failure_indices):
-            delay_in_detection = (self.data["timestamp"].iloc[detected_motor_failure_indices[0]] - self.data["timestamp"].iloc[failed_motor_indices[0]]) * 1e-6
-            fig.suptitle(f"Failed Motor: {data_limited['failed_motor'].iloc[-1]}    Detected Motor Failure: {data_limited['detected_motor_failure'].iloc[-1]} \n Delay in Detection: {delay_in_detection:.3f}s") 
+        title = ""
+        if data_limited["injected_failure"].iloc[-1] != -1:
+            title += f"Failure Injected in Motor {data_limited['injected_failure'].iloc[-1]}"
+        if data_limited["detected_failure"].iloc[-1] != -1:
+            title += f"        Failure Detected in Motor {data_limited['detected_failure'].iloc[-1]}\n\n"
+            if data_limited["injected_failure"].iloc[-1] != -1:
+                delay_in_detection = (self.data["timestamp"].iloc[detected_failure_indices[0]] - self.data["timestamp"].iloc[injected_failure_indices[0]]) * 1e-6
+                title += f"Detection Delay: {delay_in_detection:.2f} seconds"
+            else:
+                title += "False Positive!!"
         else:
-            delay_in_detection = "N/A"
-            fig.suptitle(f"Failed Motor: {data_limited['failed_motor'].iloc[-1]}    Detected Motor Failure: {data_limited['detected_motor_failure'].iloc[-1]} \n Delay in Detection: {delay_in_detection}")
+            title += "No Failure and No Detection"
+
+        fig.suptitle(title, fontsize=16)
 
         # Position plots
         axes[0].plot(timestamp_seconds_limited, data_limited[["x", "y", "z"]])
@@ -126,9 +134,9 @@ class DataPlotterNode(Node):
         axes[0].set_ylabel("Position (m)")
         axes[0].legend(["x", "y", "z"])
         axes[0].grid(True)
-        for idx in failed_motor_indices:
+        for idx in injected_failure_indices:
             axes[0].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
-        for idx in detected_motor_failure_indices:
+        for idx in detected_failure_indices:
             axes[0].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Velocity plots
@@ -137,9 +145,9 @@ class DataPlotterNode(Node):
         axes[1].set_ylabel("Velocity (m/s)")
         axes[1].legend(["vx", "vy", "vz"])
         axes[1].grid(True)
-        for idx in failed_motor_indices:
+        for idx in injected_failure_indices:
             axes[1].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
-        for idx in detected_motor_failure_indices:
+        for idx in detected_failure_indices:
             axes[1].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Acceleration plots
@@ -148,7 +156,7 @@ class DataPlotterNode(Node):
         # axes[2].set_ylabel("Acceleration (m/s²)")
         # axes[2].legend(["ax", "ay", "az"])
         # axes[2].grid(True)
-        # for idx in failed_motor_indices:
+        # for idx in injected_failure_indices:
         #     axes[2].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
 
         # Averaged acceleration plots
@@ -158,9 +166,9 @@ class DataPlotterNode(Node):
         axes[2].set_ylabel("Acceleration (m/s²)")
         axes[2].legend(["ax", "ay", "az"])
         axes[2].grid(True)
-        for idx in failed_motor_indices:
+        for idx in injected_failure_indices:
             axes[2].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
-        for idx in detected_motor_failure_indices:
+        for idx in detected_failure_indices:
             axes[2].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Attitude plots
@@ -169,9 +177,9 @@ class DataPlotterNode(Node):
         axes[3].set_ylabel("Angle (rad)")
         axes[3].legend(["roll", "pitch", "yaw"])
         axes[3].grid(True)
-        for idx in failed_motor_indices:
+        for idx in injected_failure_indices:
             axes[3].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
-        for idx in detected_motor_failure_indices:
+        for idx in detected_failure_indices:
             axes[3].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Attitude rate plots
@@ -180,7 +188,7 @@ class DataPlotterNode(Node):
         # axes[4].set_ylabel("Rate (rad/s)")
         # axes[4].legend(["roll_rate", "pitch_rate", "yaw_rate"])
         # axes[4].grid(True)
-        # for idx in failed_motor_indices:
+        # for idx in injected_failure_indices:
         #     axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
 
         # Averaged attitude rate plots
@@ -190,9 +198,9 @@ class DataPlotterNode(Node):
         axes[4].set_ylabel("Rate (rad/s)")
         axes[4].legend(["roll_rate", "pitch_rate", "yaw_rate"])
         axes[4].grid(True)
-        for idx in failed_motor_indices:
+        for idx in injected_failure_indices:
             axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="dotted")
-        for idx in detected_motor_failure_indices:
+        for idx in detected_failure_indices:
             axes[4].axvline(x=timestamp_seconds_limited[idx], color="black", linestyle="solid")
 
         # Set common x-label

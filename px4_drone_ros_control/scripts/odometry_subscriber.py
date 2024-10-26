@@ -6,7 +6,6 @@ from rclpy.node import Node
 from px4_msgs.msg import VehicleOdometry
 from std_msgs.msg import Int16
 import numpy as np
-import pandas as pd
 import csv
 import signal
 import sys, math, os
@@ -60,10 +59,10 @@ class OdometrySubscriber(Node):
         self.ax = self.ay = self.az = 0.0
         self.roll = self.pitch = self.yaw = 0.0
         self.roll_rate = self.pitch_rate = self.yaw_rate = 0.0
-        self.failed_motor = -1
-        self.detected_motor_failure = -1
-        self.motor_failed_timestamp = None
-        self.failure_detected_timestamp = None
+        self.injected_failure = -1
+        self.detected_failure = -1
+        self.failure_injection_timestamp = None
+        self.failure_detection_timestamp = None
 
         # Previous values for rate and acceleration calculations (store in radians)
         self.prev_roll_rad = self.prev_pitch_rad = self.prev_yaw_rad = 0.0
@@ -127,8 +126,8 @@ class OdometrySubscriber(Node):
                 "roll_rate",
                 "pitch_rate",
                 "yaw_rate",
-                "failed_motor",
-                "detected_motor_failure",
+                "injected_failure",
+                "detected_failure",
             ]
         )
 
@@ -186,34 +185,30 @@ class OdometrySubscriber(Node):
             self.yaw_rate = np.degrees(yaw_rate_rad)
 
     def detect_failure(self):
-        # Append the new acceleration to last_20_az
         if len(self.last_20) < 20:
             self.last_20.append([self.az, self.pitch_rate, self.yaw_rate])
         else:
             self.last_20.pop(0)
             self.last_20.append([self.az, self.pitch_rate, self.yaw_rate])
-        
         # Calculate the average of the last 20 az values
         avg_az = np.mean(self.last_20, axis=0)[0]
         avg_pitch_rate = np.mean(self.last_20, axis=0)[1]
         avg_yaw_rate = np.mean(self.last_20, axis=0)[2]
-        if avg_az > self.threshold_acceleration:
-            self.failure_detected_timestamp = self.timestamp
+
+        if avg_az >= self.threshold_acceleration:
+            self.failure_detection_timestamp = self.timestamp
             if avg_pitch_rate < 0 and avg_yaw_rate < 0:
-                self.detected_motor_failure = 0
+                self.detected_failure = 0
             if avg_pitch_rate > 0 and avg_yaw_rate < 0:
-                self.detected_motor_failure = 1
+                self.detected_failure = 1
             if avg_pitch_rate < 0 and avg_yaw_rate > 0:
-                self.detected_motor_failure = 2
+                self.detected_failure = 2
             if avg_pitch_rate > 0 and avg_yaw_rate > 0:
-                self.detected_motor_failure = 3
-            self.get_logger().info(f"Motor failure detected: {self.detected_motor_failure}")
-            self.get_logger().info(f"Delay in detection: {(self.failure_detected_timestamp - self.motor_failed_timestamp) * 1e-6:.3f}s")
+                self.detected_failure = 3
 
     def motor_failure_callback(self, msg):
-        self.failed_motor = msg.data
-        self.motor_failed_timestamp = self.timestamp
-        self.get_logger().info(f"Motor {self.failed_motor} failed")
+        self.injected_failure = msg.data
+        self.failure_injection_timestamp = self.timestamp
 
     def odometry_callback(self, msg):
         self.timestamp = msg.timestamp
@@ -266,16 +261,16 @@ class OdometrySubscriber(Node):
                 self.roll_rate,
                 self.pitch_rate,
                 self.yaw_rate,
-                self.failed_motor,
-                self.detected_motor_failure,
+                self.injected_failure,
+                self.detected_failure,
             ]
         )
 
         self.get_logger().info(
-            f"{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw, self.roll_rate, self.pitch_rate, self.yaw_rate, self.failed_motor, self.detected_motor_failure]} - written to file"
+            f"{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw, self.roll_rate, self.pitch_rate, self.yaw_rate, self.injected_failure, self.detected_failure]} - written to file"
         )
 
-        if self.detected_motor_failure == -1:
+        if self.detected_failure == -1:
             self.detect_failure()   
 
 def main(args=None):
@@ -288,8 +283,16 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        # Cleanup
+        # Cleanup and logs
         odometry_subscriber.csv_file.close()
+        if odometry_subscriber.injected_failure != -1:
+            odometry_subscriber.get_logger().info(f"Failure Injected in Motor {odometry_subscriber.injected_failure}")
+        if odometry_subscriber.detect_failure != -1:
+            odometry_subscriber.get_logger().info(f"Failure Detected in Motor {odometry_subscriber.detected_failure}")
+            if odometry_subscriber.injected_failure != -1:
+                odometry_subscriber.get_logger().info(f"Delay in Detection: {(odometry_subscriber.failure_detection_timestamp - odometry_subscriber.failure_injection_timestamp) * 1e-6:.3f}s")
+            else:
+                odometry_subscriber.get_logger().info("False Positive!!")
         odometry_subscriber.destroy_node()
         rclpy.shutdown()
 

@@ -14,6 +14,7 @@ class TerminalLauncherNode(Node):
 
         # Store the commands to be executed in different tabs
         self.commands = [
+            "cd ~/inter-iit_ws && colcon build && cd ..",
             "cd ~/PX4-Autopilot && make px4_sitl gz_x500",
         ]
 
