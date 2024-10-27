@@ -30,11 +30,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
+# motor_failure module with integrated Failure Injector
 px4_add_module(
- MODULE examples__motor_failure
- MAIN motor_failure
- STACK_MAIN 2000
- SRCS
-     motor_failure.c
- DEPENDS
- )
+    MODULE examples__motor_failure
+    MAIN fail          # Entry point
+    SRCS
+        failure_main.cpp            # Entry point handler for commands
+        failure_injector.cpp               # Failure Injector functionality
+        failure_injector.h                 # Failure Injector header
+    DEPENDS
+)
+
