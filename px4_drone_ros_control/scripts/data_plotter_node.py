@@ -13,7 +13,7 @@ class DataPlotterNode(Node):
         # Declare parameters
         self.declare_parameter(
             "data_directory",
-            "/home/shravan/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs",
+            "/home/kuldeep/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs",
         )
 
         # Get parameters

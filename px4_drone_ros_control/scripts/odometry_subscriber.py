@@ -90,7 +90,7 @@ class OdometrySubscriber(Node):
         )
 
         # Initialize CSV file
-        self.log_directory = "/home/shravan/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs"
+        self.log_directory = "/home/kuldeep/inter-iit_ws/src/Inter-IIT_IdeaForge-PS/px4_drone_ros_control/logs"
         self.csv_filename = "/odometry_data_0.csv"
         if os.path.exists(self.log_directory + self.csv_filename):
             while os.path.exists(self.log_directory + self.csv_filename):

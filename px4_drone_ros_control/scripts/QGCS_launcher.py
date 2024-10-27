@@ -15,7 +15,7 @@ class TerminalLauncherNode(Node):
         
         # Store the commands to be executed in different tabs
         self.commands = [
-            "cd ~/Downloads && ./QGroundControl.AppImage",              # Tab 3
+            "cd ~ && ./QGroundControl.AppImage",              # Tab 3
         ]
 
     def launch_terminals_callback(self):
