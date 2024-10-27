@@ -1,0 +1,10 @@
+- ros_topic_name: "/x500_0/command/motor_vel"
+  gz_topic_name:  "/x500_0/command/motor_vel"
+  ros_type_name: "actuator_msgs/msg/Actuators"
+  gz_type_name: "gz.msgs.Actuators"
+  direction: ROS_TO_GZ
+- ros_topic_name: "/x500_0/command/motor_speed"
+  gz_topic_name:  "/x500_0/command/motor_speed"
+  ros_type_name: "actuator_msgs/msg/Actuators"
+  gz_type_name: "gz.msgs.Actuators"
+  direction: GZ_TO_ROS
