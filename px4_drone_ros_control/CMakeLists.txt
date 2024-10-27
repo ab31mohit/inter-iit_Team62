@@ -38,6 +38,7 @@ install(PROGRAMS
   scripts/motor_command_bypass_node.py
   scripts/odometry_subscriber.py
   scripts/data_plotter_node.py
+  scripts/control_bridge_node.py
 
   scripts/QGCS_launcher.py
   scripts/MicroXRCEAgent_launcher.py
