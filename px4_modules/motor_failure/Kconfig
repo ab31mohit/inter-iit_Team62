@@ -1,5 +1,5 @@
 menuconfig EXAMPLES_MOTOR_FAILURE
-	bool "motor_failure"
-	default n
-	---help---
-		Enable support for motor_failure
+ bool "motor_failure"
+ default n
+ ---help---
+     Enable support for motor_failure
