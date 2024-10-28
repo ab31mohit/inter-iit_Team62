@@ -32,12 +32,14 @@
 ############################################################################
 # motor_failure module with integrated Failure Injector
 px4_add_module(
-    MODULE examples__fail_motor
-    MAIN fail          # Entry point
+    MODULE examples__single_motor_failure
+    MAIN smf          # Entry point
     SRCS
         failure_main.cpp            # Entry point handler for commands
         failure_injector.cpp               # Failure Injector functionality
         failure_injector.h                 # Failure Injector header
+        failure_detector.cpp               # Failure Detector functionality
+        failure_detector.h                 # Failure Detector header
     DEPENDS
 )
 

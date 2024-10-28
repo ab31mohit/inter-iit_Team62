@@ -38,6 +38,7 @@
  * @author Mark Charlebois <mcharleb@gmail.com>
  */
 #include "failure_injector.h"
+#include "failure_detector.h"
 
 #include <px4_platform_common/log.h>
 #include <px4_platform_common/app.h>
@@ -50,19 +51,44 @@
 
 
 static int daemon_injector_task;             /* Handle of deamon task / thread */
+static int daemon_detector_task;
 
+int injection_timestamp;
 
 //using namespace px4;
 
+int vehicle_odometry_fd;
+vehicle_odometry_s odometry;
+// vehicle_odometry_s timer;
 
+int daemon_detector(int argc, char **argv)
+{
+	px4::init(argc, argv, "Motor Failure Detector");
 
+	printf("Starting failure detection \n");
+    
+	// int vehicle_odometry_fd = orb_subscribe(ORB_ID(vehicle_odometry));
+    // vehicle_odometry_s odometry;
+
+	Detector detection;
+
+	int detected_motor = detection.main(); 
+
+    orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
+
+	int detected_timestamp = odometry.timestamp;
+	double latency = (detected_timestamp - injection_timestamp) * 1e-6;
+	printf("Failure detected at motor %d ...... \nDetection Timestamp = %d \nDetection latency = %f \n", detected_motor,detected_timestamp
+	, latency);
+	printf("goodbye\n");
+	return 0;
+}
 
 
 int daemon_injector(int argc, char **argv)
 {
-	px4::init(argc, argv, "Motor Failure");
+	px4::init(argc, argv, "Motor Failure Injector");
 
-	printf("Starting failure injection at motor instance %s\n", argv[0]);
     
 	    // Check if we received the motor ID argument
     if (argc > 1) {
@@ -74,12 +100,21 @@ int daemon_injector(int argc, char **argv)
 
         int motor_index = atoi(motor_id); 
 
-        Injector injection;
+		// int vehicle_odometry_fd = orb_subscribe(ORB_ID(actuator_motors));
+		// vehicle_odometry_s timer;
+		orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
+	 	injection_timestamp = odometry.timestamp;
 
+		printf("Injection at %d \n", injection_timestamp);
+
+        Injector injection;
         injection.main(motor_index); 
 
+		
+
+
     } else {
-        printf("No motor ID specified. usage: fail {start|stop|status} {instance} \n(instance = 0 fails all motors)");
+        printf("No motor ID specified. usage: smf {start|stop|status} {instance} \n(instance = 0 fails all motors)");
         return 1;
     }
 
@@ -89,15 +124,15 @@ int daemon_injector(int argc, char **argv)
 
 
 
-
-
-
-extern "C" __EXPORT int fail_main(int argc, char *argv[]);
-int fail_main(int argc, char *argv[])
+extern "C" __EXPORT int smf_main(int argc, char *argv[]);
+int smf_main(int argc, char *argv[])
 {
+    
+	vehicle_odometry_fd = orb_subscribe(ORB_ID(vehicle_odometry));
+
 
 	if (argc < 2) {
-		PX4_WARN("usage: fail {start|stop|status} {instance} \n(instance = 0 fails all motors) \n");
+		PX4_WARN("usage: smf {detect|start|stop|status} {instance} \n(instance = 0 fails all motors) \n");
 		return 1;
 	}
 
@@ -123,6 +158,25 @@ int fail_main(int argc, char *argv[])
 		return 0;
 	}
 
+	if (!strcmp(argv[1], "detect")) {
+
+		if (Detector::appState.isRunning()) {
+			PX4_INFO("already running\n");
+			/* this is not an error */
+			return 0;
+		}
+
+		daemon_detector_task =  px4_task_spawn_cmd("Failure Detector",
+						 	    SCHED_DEFAULT,
+						        SCHED_PRIORITY_MAX - 5,
+								2000,
+						 		daemon_detector,
+						 		(argv) ? (char *const *)&argv[2] : (char *const *)nullptr);
+
+
+		return 0;
+	}
+
 	if (!strcmp(argv[1], "stop")) {
 		Injector::appState.requestExit();
 		return 0;
@@ -139,7 +193,7 @@ int fail_main(int argc, char *argv[])
 		return 0;
 	}
 
-	PX4_WARN("usage: fail {start|stop|status} \n");
+	PX4_WARN("usage: smf {start|stop|status} \n");
 	return 1;
 }
 

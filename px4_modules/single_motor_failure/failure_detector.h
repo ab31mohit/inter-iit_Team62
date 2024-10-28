@@ -29,27 +29,65 @@
  ****************************************************************************/
 
 /**
- * @file hello_example.h
- * Example app for Linux
+ * @file hello_example.cpp
+ * Example for Linux
  *
  * @author Mark Charlebois <charlebm@gmail.com>
  */
+
 #pragma once
 
+#include <cmath>
+#include <vector>
+#include <array>
 #include <px4_platform_common/app.h>
-#include <uORB/topics/actuator_motors.h>
+#include <uORB/topics/vehicle_odometry.h>
 
-class Injector
+class Detector
 {
 public:
-    Injector() {}
-    ~Injector() {}
+    Detector() {}
+    ~Detector() {}
 
-    int main(int motor_index);
+    int main();
 
     static px4::AppState appState; /* track requests to terminate app */
 
+    // Current state variables
+    double ax = 0.0, ay = 0.0, az = 0.0;
+    double roll_rate = 0.0, pitch_rate = 0.0, yaw_rate = 0.0;
+    double threshold_acceleration = 4.0;  // Example threshold
+    int detected_motor_failure = -1;
+    int failed_motor = -1;
+    int timestamp = 0;
+    int motor_failed_timestamp = 0;
+    int failure_detected_timestamp = 0;
+
+    // Vectors for storing the last 20 data points
+    std::vector<std::array<double, 3>> last_20;
+
+    // Previous state variables for calculating deltas
+    double prev_vx = 0.0, prev_vy = 0.0, prev_vz = 0.0;
+    double prev_roll_rad = 0.0, prev_pitch_rad = 0.0, prev_yaw_rad = 0.0;
+    double prev_timestamp = 0.0;
+
+    // Position and velocity variables
+    double x = 0.0, y = 0.0, z = 0.0;
+    double vx = 0.0, vy = 0.0, vz = 0.0;
+    double roll = 0.0, pitch = 0.0, yaw = 0.0;
+
+    // Function declarations
+    double* quaternionToRPY (double w, double x, double y, double z);
+    void calculateAccelerations(int timestmp);
+    double normalizeAngle(double angle);
+    double calculateAngularRate(double current, double previous, double dt);
+    void calculateAttitudeRates(int timestmp, double roll_rad, double pitch_rad, double yaw_rad);
+    void detectFailure();
+    void odometryUpdate(int vehicle_odometry_fd, vehicle_odometry_s &vehicle_odometry);
+
+
+    
+
 private:
-    void updateController(int actuator_outputs_fd, actuator_motors_s &controller);
-    void failMotorIndex(const actuator_motors_s &controller, actuator_motors_s &act, int motor_index);
+    
 };
