@@ -164,8 +164,31 @@ You can type `test_module` to see if your moule is working correctly.
 </div>
 
 ## Using modules defined in 'px4_modules'
-This `px4_modules` directory containes necessary px4 modules for this Problem statement like    
-- ### motor_failure :   
+This `px4_modules` directory containes necessary px4 modules for this Problem statement like
+
+### 1. single_motor_failure (smf)
+This `smf` or single_motor_failure module will do all the work from failing a specific motor to detecting which motor has failed & stabilizing the drone afterwards.
+
+#### Usage:
+- Run the motor failure detection sub-module as soon as you start your drone
+```
+smf detect
+```
+- Fail any particular motor (1....12) using
+```
+smf start 2
+```
+to fail 2nd motor (motor_id 1)
+- To stop injecting motor failure use (might not work)
+```
+smf stop
+```
+- To see the status of `smf` command use
+```
+smf status
+```
+
+### 2. motor_failure  
 
 This module is used to implement single motor failure in SITL drone.    
 To use this module, copy the *motor_failure* folder in your `PX4_Autopilot/src/examples/` directory.    
