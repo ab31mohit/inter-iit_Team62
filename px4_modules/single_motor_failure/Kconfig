@@ -1,0 +1,5 @@
+menuconfig EXAMPLES_SINGLE_MOTOR_FAILURE
+	bool "single_motor_failure"
+	default n
+	---help---
+		Enable support for single_motor_failure
