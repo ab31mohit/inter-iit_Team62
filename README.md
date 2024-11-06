@@ -206,7 +206,8 @@ ros2 launch px4_drone_ros_control launch_sim_env.launch.py
 ```
 
 ## Creating your custom PX4-module
-Follow this doc [creating px4 module](px4_modules/modules_README.md) to create your own PX4 Module & compile it in px4 firmware.
+Follow this doc [creating px4 module](px4_modules/modules_README.md) to create your own PX4 Module & compile it in px4 firmware.    
+This doc also containes instructions to use our custom px4 modules.
 
 
 ---
