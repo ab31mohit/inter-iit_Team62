@@ -47,40 +47,110 @@
 #include <string.h>
 #include <sched.h>
 
+#include "failure_controller.h"
+#include <uORB/Publication.hpp>
 #include <px4_platform_common/init.h>
 
 
+#include <fstream>
+#include <filesystem>
+#include <string>
 static int daemon_injector_task;             /* Handle of deamon task / thread */
 static int daemon_detector_task;
-
-int injection_timestamp;
-
+namespace fs = std::filesystem;
+int injected_motor;
+long long int injection_unix;
+long long int detection_unix;
 //using namespace px4;
-
+std::string log_directory;
+std::string csv_filename = "/px4_logs_0.csv";
 int vehicle_odometry_fd;
 vehicle_odometry_s odometry;
-// vehicle_odometry_s timer;
+// const char* homeDir = std::getenv("HOME");
 
+#include <iostream>
+#include <chrono>
+#include <cstdlib> 
+
+int injected_timestamp;
+long long int getUnix(){
+    auto now = std::chrono::system_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
+    long long int timestamp = duration.count() / 1000;
+    return timestamp;
+}
+std::string expandTilde(const std::string& path) {
+    if (!path.empty() && path[0] == '~') {
+        const char* homeDir = std::getenv("HOME");
+        if (homeDir) {
+            return std::string(homeDir) + path.substr(1);
+        } else {
+            PX4_WARN("HOME environment variable is not set.");
+            return path; // Return the original path if HOME is not set
+        }
+    }
+    return path;
+}
 int daemon_detector(int argc, char **argv)
 {
 	px4::init(argc, argv, "Motor Failure Detector");
 
 	printf("Starting failure detection \n");
-    
-	// int vehicle_odometry_fd = orb_subscribe(ORB_ID(vehicle_odometry));
-    // vehicle_odometry_s odometry;
-
+    log_directory = "~/inter-iit_Team62/motor_tests/detection_logs/px4_logs";
+	
 	Detector detection;
 
 	int detected_motor = detection.main(); 
+    bool updated = false;
+	orb_check(vehicle_odometry_fd, &updated);
 
-    orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
-
+	if (updated) {
+		orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
+	} else {
+		PX4_WARN("No new data available; timestamp might be zero");
+	}
+	
+	detection_unix = getUnix();
 	int detected_timestamp = odometry.timestamp;
-	double latency = (detected_timestamp - injection_timestamp) * 1e-6;
+	int latency_int = (detected_timestamp - injected_timestamp);
+	double latency = latency_int * 1e-6;
 	printf("Failure detected at motor %d ...... \nDetection Timestamp = %d \nDetection latency = %f \n", detected_motor,detected_timestamp
 	, latency);
+
+	printf("Injection UNIX: %lld\nDetected UNIX:  %lld\n", injection_unix, detection_unix);
 	printf("goodbye\n");
+
+	std::string expanded_directory = expandTilde(log_directory);
+
+    // Initialize file path and index
+    std::string file_path = expanded_directory + csv_filename;
+    int file_index = 0;
+
+    // Find a unique file name
+    while (fs::exists(file_path)) {
+        file_index++;
+        csv_filename = "/px4_logs_" + std::to_string(file_index) + ".csv";
+        file_path = expanded_directory + csv_filename;
+    }
+
+    // Open the file in append mode and log the values
+    std::ofstream csv_file(file_path, std::ios::app);
+    if (csv_file.is_open()) {
+        csv_file << detected_timestamp << "," << injected_timestamp << "," << latency_int << ","
+                 << detected_motor << "," << injected_motor << "," << detection_unix << ","
+                 << injection_unix << "\n";
+        csv_file.close();
+    } else {
+        PX4_WARN("Failed to open CSV log file: %s\n", file_path.c_str());
+    }
+
+	if(detected_motor > 0) {
+	  printf("Starting Failure Control \n");
+          Controller control;
+          control.main();
+
+	}
+	
 	return 0;
 }
 
@@ -100,17 +170,21 @@ int daemon_injector(int argc, char **argv)
 
         int motor_index = atoi(motor_id); 
 
-		// int vehicle_odometry_fd = orb_subscribe(ORB_ID(actuator_motors));
-		// vehicle_odometry_s timer;
-		orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
-	 	injection_timestamp = odometry.timestamp;
+		bool updated = false;
+		orb_check(vehicle_odometry_fd, &updated);
 
-		printf("Injection at %d \n", injection_timestamp);
+		if (updated) {
+			orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
+		} else {
+			PX4_WARN("No new data available; timestamp might be zero");
+		}
 
+		injection_unix = getUnix();
+		injected_timestamp = odometry.timestamp;
+
+		printf("Injection at %d \n", injected_timestamp);
         Injector injection;
         injection.main(motor_index); 
-
-		
 
 
     } else {
@@ -122,14 +196,10 @@ int daemon_injector(int argc, char **argv)
 	return 0;
 }
 
-
-
 extern "C" __EXPORT int smf_main(int argc, char *argv[]);
 int smf_main(int argc, char *argv[])
 {
-    
 	vehicle_odometry_fd = orb_subscribe(ORB_ID(vehicle_odometry));
-
 
 	if (argc < 2) {
 		PX4_WARN("usage: smf {detect|start|stop|status} {instance} \n(instance = 0 fails all motors) \n");
@@ -147,7 +217,7 @@ int smf_main(int argc, char *argv[])
 		char *motor_failure_args[2];
         motor_failure_args[0] = argv[2];  // Motor ID to fail
         motor_failure_args[1] = nullptr;   // Null-terminate the array
-
+		injected_motor = std::atoi(motor_failure_args[0]);
 		daemon_injector_task =  px4_task_spawn_cmd("Motor Failure",
 						 	    SCHED_DEFAULT,
 						        SCHED_PRIORITY_MAX - 5,
@@ -172,8 +242,6 @@ int smf_main(int argc, char *argv[])
 								2000,
 						 		daemon_detector,
 						 		(argv) ? (char *const *)&argv[2] : (char *const *)nullptr);
-
-
 		return 0;
 	}
 
@@ -189,7 +257,6 @@ int smf_main(int argc, char *argv[])
 		} else {
 			PX4_INFO("not started\n");
 		}
-
 		return 0;
 	}
 
@@ -197,6 +264,6 @@ int smf_main(int argc, char *argv[])
 	return 1;
 }
 
-////////////////////////////////////////////
 
+////////////////////////////////////////////
 

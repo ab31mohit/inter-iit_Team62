@@ -40,6 +40,7 @@ px4_add_module(
         failure_injector.h                 # Failure Injector header
         failure_detector.cpp               # Failure Detector functionality
         failure_detector.h                 # Failure Detector header
+        failure_controller.cpp
+        failure_controller.h
     DEPENDS
 )
-

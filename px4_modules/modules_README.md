@@ -187,18 +187,3 @@ smf stop
 ```
 smf status
 ```
-
-### 2. motor_failure  
-
-This module is used to implement single motor failure in SITL drone.    
-To use this module, copy the *motor_failure* folder in your `PX4_Autopilot/src/examples/` directory.    
-Now run the following command to build this module for SITL px4 board
-```
-cd ~/PX4-Autopilot
-make px4_sitl_default boardconfig
-```
-To use this module in SITL use this command (make sure your drone is hovering already)
-```
-motor_failure start -m 1 -c
-```
-where `1` is the motor number(1 to 12) that you want to fail.
