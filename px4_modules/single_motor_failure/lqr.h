@@ -29,32 +29,69 @@
  ****************************************************************************/
 
 /**
- * @file failure_controller.h
- *  Header of Controller class
+ * @file lqr.h
+ * Header file for LQR class
  *
  */
 #pragma once
 
-#include <px4_platform_common/app.h>
-#include <uORB/topics/actuator_motors.h>
-#include <uORB/topics/vehicle_odometry.h>
-#include <uORB/topics/vehicle_global_position.h>
+#include <iostream>
+#include <vector>
+#include <cmath>
 
+using Matrix = std::vector<std::vector<double>>;
+using Vector = std::vector<double>;
 
-class Controller
+class LQR
 {
 public:
-    Controller() {}
-    ~Controller() {}
+    LQR() {}
+    ~LQR() {}
 
-    int main(int detected_motor);
-
-    static px4::AppState appState; /* track requests to terminate app */
+    Vector getControlInputs(Vector actual_state, int detected_motor);
 
 
-    double* quaternionToRPY (double qw, double qx, double qy, double qz);
-    double* vectorAlongNormal (double pitch_rad, double yaw_rad);
-    double* rpy_rate_plus(double roll_rate, double pitch_rate, double yaw_rate);
+    Matrix multiply(const Matrix &a, const Matrix &b);
+    Vector multiply(const Matrix &a, const Vector &b);
+    Matrix transpose(const Matrix &a);
+    Matrix inverse2x2(const Matrix &a);
+    Matrix identityMatrix(int size);
+    Vector clampVector(const Vector &vec, double minVal, double maxVal);
+    double norm(const Vector &vec);
+    Vector vectorAdd(const Vector &a, const Vector &b);
+    Matrix matrixAdd(const Matrix &a, const Matrix &b);
+    Matrix matrixSubtract(const Matrix &a, const Matrix &b);
+    Vector lqr(const Vector &actual_state, const Vector &desired_state, const Matrix &Q, const Matrix &R, const Matrix &A, const Matrix &B, double dt);
+    Vector state_space_model(const Matrix &A, const Vector &state, const Matrix &B, Vector control_input);
+    Matrix getB(double deltat);
+    Matrix getA(double deltat);
+
+
+    //Vehicle Constants
+    double I_xxt = 0.02166666666666667;
+    double I_yyt = 0.02166666666666667;
+    double I_zzt = 0.04000000000000001;
+    double I_zzp = 1.1928e-4;
+    double l = 0.25;
+
+
+
+
+    // Equilibrium state variables
+    double nx_eq;
+    double ny_eq;
+    double nz_eq;
+    double p_eq;
+    double q_eq;
+    double r_eq = -8.5;
+    double w1_eq = 738.0 ;
+    double w2_eq = 522.0 ;
+    double w3_eq =  738.0;
+    double w4_eq = 0.0;
+
+   // A matrix variable
+    double a_const = ((I_xxt - I_zzt)*r_eq/I_xxt) + I_zzp*( w1_eq + w2_eq + w3_eq + w4_eq ) / I_xxt ;
+
 
 
 private:

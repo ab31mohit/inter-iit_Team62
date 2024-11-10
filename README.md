@@ -68,14 +68,14 @@ sudo apt install libfuse2 -y
 sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
 cd ~
 ```
-- Now download the app-image file from [here](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage) in your `/home/username/` directory.   
+- Now download the app-image file from [here](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage) in your **<span style="color:orange">/home/username/</span>** directory.   
 - Change the executable permissions for GCS & try to run it
 ```
 cd ~
 chmod +x ./QGroundControl.AppImage
 ./QGroundControl.AppImage
 ```
-Close the terminal (by interrupting with `ctrl + c`) to close the QGroundControl.
+Close the terminal (by interrupting with **<span style="color:orange">ctrl + c</span>**) to close the QGroundControl.
 
 
 ### 7. Testing the PX4 setup :
@@ -105,24 +105,31 @@ If everything works fine, you should get something like this
   <img src="readme-media/px4_setup.jpeg" alt="PX4 Setup file" />
 </div> 
 
-- Use the command `commander land` to land the drone.
+- Use the command **<span style="color:orange">commander land</span>** to land the drone.
 
+### 8. Increasing motor constant :
+- To increase the thrust range of all the motors of the drone, we have increased the motor constant parameter by doubling it.
+
+- Go to **<span style="color:orange">~/PX4-Autopilot/Tools/simulation/gz/models/x500/</span>** directory and open the ***model.sdf*** file and replace the motor constant value of all motors to this
+```
+<motorConstant>17.0916e-06</motorConstant>
+```
 
 ## Building custom px4 module
-- For simulating single motor failure, we have created a custom module based on PX4 firmware architecture named [`single_motor_failure`](px4_modules/single_motor_failure/).
+- For simulating single motor failure, we have created a custom module based on PX4 firmware architecture named [single_motor_failure](px4_modules/single_motor_failure/).
 - In this module we've integrated injection of single motor failure, detection of motor failure and controlling the drone after detection of motor failure.
 - We have used the predefined px4 based UORB topics to send commands to the drone in the modules.
 - You can follow [creating custom px4 module](px4_modules/modules_README.md) doc to know more about how to create a custom px4 module and compile it. 
 
 ### 1. Building the module in PX4-firmware:
-In order to run the `single_motor_failure` module you first need to make sure that it is built as part of PX4 Firmware.    
+In order to run the **<span style="color:orange">single_motor_failure</span>** module you first need to make sure that it is built as part of PX4 Firmware.    
 Applications are added to the build/firmware in the appropriate board-level px4board file for your target:
 
 PX4-SITL (Simulator) : px4_sitl_default
 
-- To use this module, copy the `single_motor_failure` directory to `~/PX4-Autopilot/src/examples/` directory.
+- To use this module, copy the **<span style="color:orange">single_motor_failure</span>** directory to **<span style="color:orange">~/PX4-Autopilot/src/examples/</span>** directory.
 
-- To enable the compilation of the application/module into the firmware add the corresponding Kconfig key CONFIG_EXAMPLES_TEST_MODULE=y in the `px4board` file or run boardcofonfig make command a follows
+- To enable the compilation of the application/module into the firmware add the corresponding Kconfig key CONFIG_EXAMPLES_TEST_MODULE=y in the **<span style="color:orange">px4_ofboard</span>** file or run boardcofonfig make command a follows
 ```
 cd ~/PX4-Autopilot/
 make px4_sitl_default boardconfig
@@ -134,14 +141,15 @@ make px4_sitl_default boardconfig
 </div>
 
 
-- Go to examples, you will file a new module named `test_module`, select that & press enter. Now save this module by pressing `Q` & then select `yes`.
+- Go to examples, you will file a new module named **<span style="color:orange">single_motor_failure</span>**, select that & press enter. Now save this module by pressing **<span style="color:orange">Q</span>** & then select **<span style="color:orange">yes</span>**.
 
 - Now this module is ready to run as part of PX4 firmware in sitl.     
 
-*`NOTE:`* For other boards, please select the specific board in the compiltion step.
+**<span style="color:black">*NOTE:*</span>**   
+For other boards, please select the specific board in the compiltion step.
 
 
-## Using the `single_motor_failure` module
+## Using the **<span style="color:orange">single_motor_failure</span>** module
 
 ### 1. running detection part first for motor failure:
 
@@ -171,7 +179,7 @@ smf detect
 ### 2. injecting the motor failure:
 Before running this command, make sure everything in step 1 is already working.
 
-- run this command in px4 sitl terminal to fail a motor with `motor_id=2`
+- run this command in px4 sitl terminal to fail a motor with **<span style="color:orange">motor_id=2</span>**
 ```
 smf start 2
 ```
@@ -182,18 +190,47 @@ The output would be something like this
 </div> 
 
 
-The motor_id can be from `[0, 4]`.     
+The motor_id can be from **<span style="color:orange">[0, 4]</span>**.     
 0 means --> fail all motors at once.    
 1 means --> fail single motor with motor_id=0
 and so on.
 
-- After running this command, the `smf detect` will figure that a motor with motor_id=2 has been failed.
+- After running this command, the **<span style="color:orange">smf detect</span>** will figure that a motor with motor_id=2 has been failed.
 
 
----
+## Generating flight data after failure injection
+- The logic for motor failure detection has been implemented by visualizing the variations of avg_az(average angular acceleration of drone along z axis) and avg_rr(average rate of change of roll value) for multiple instances in different cases like hovering, takeoff & landing.  
+- The code for generating the flight data for different cases of drone flight (during and after failure injection) has been implemented in [detection_tests/scripts/](detection_tests/scripts).
+- Three different types of data are being generated by the scripts :
+1. Odometry data of drone in [detection_logs/csv/](detection_logs/csv/) directory.
+2. Plots of odometry data wrt. time in [detection_logs/plots/](detection_logs/plots/) directory.
+3. The logs of *single_motor_failure* module & latency of motor failure detection logic in [detection_logs/px4_logs/](detection_logs/px4_logs/) directory.
 
-### Contributors :
-[Mohit](https://github.com/ab31mohit)    
-[Rajeev](https://github.com/rajeev-gupta-bashrc)    
-[Ronnit](https://github.com/NULL300)      
-[Abhikankshit](https://github.com/OARSS)
+### 1. Install the specific version of python libraries to run the code :
+```
+cd ~/inter-iit_Team62/detection_tests/scripts/
+pip install -r requirements.txt
+```
+
+### 2. launch the python file to run xrce-dds agent alongside qground control :
+```
+cd ~/inter-iit_Team62/detection_tests/scripts/
+python3 launch_drone_env.py
+````
+
+### 3. Generating the detection data for each of cases after failure injection :
+- Those three cases are --> takeoff, hover, landing.
+
+```
+cd ~/inter-iit_Team62/detection_tests/scripts/automation/
+bash demo.sh
+```
+
+- This bash file uses tmux to run different sessions of gazebo & px4 sitl.
+- This will launch px4 sitl with gazebo and then fail the specific motor for each of those three cases and generate the  **<span style="color:orange">detection_logs</span>**.
+
+### 4. Plotting graphs for odometry data :
+```
+cd ~/inter-iit_Team62/detection_tests/scripts/
+python3 plotting_automation.py
+```

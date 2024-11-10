@@ -13,10 +13,6 @@ loading_bar() {
     printf "\n"
 }
 
-# echo "Starting QGround COntrol, MicroDDS, px4_gz_bridge node"
-# tmux new-session -d -s drone_automation
-# cho "Created new tmux session 'drone_automation'."
-
 # Array of heights to be used in the sessions
 heights=(10.0 15.0 20.0)
 failures=(1 2 3 4) # Motor failure indices (assuming motors are 1-indexed)
@@ -53,17 +49,20 @@ for height in "${heights[@]}"; do
             echo "Sent 'commander takeoff' to SITL..."
 
             if (( $(echo "$height == 10.0" | bc -l) )); then
-                loading_bar 6
+                loading_bar 12
             elif (( $(echo "$height == 15.0" | bc -l) )); then
-                loading_bar 8
+                loading_bar 17
             elif (( $(echo "$height == 20.0" | bc -l) )); then
-                loading_bar 10
+                loading_bar 22
             fi
-            # elif (( $(echo "$height == 25.0" | bc -l) )); then
-            #     loading_bar 15
+
+            # Send 'commander takeoff' command
+            tmux send-keys -t drone_automation "commander land" C-m
+            echo "Sent 'commander land' to SITL..."
+            loading_bar 4
 
             # Pane 0: Start the odometry subscriber Python script
-            tmux send-keys -t drone_automation.0 "python3 inter-iit_Team62/motor_tests/scripts/odometry_subscriber.py" C-m
+            tmux send-keys -t drone_automation.0 "python3 inter-iit_Team62/detection_tests/scripts/odometry_subscriber.py" C-m
             echo "Running Odometry Subscriber"
             loading_bar 1
 
@@ -92,7 +91,7 @@ for height in "${heights[@]}"; do
             echo "Completed run for height ${height}m with motor failure ${failure}."
             
             # Sleep before the next run (you can adjust the sleep time as needed)
-            sleep 8
+            sleep 10
         done
     done
 done

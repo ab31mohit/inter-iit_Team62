@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 import rclpy
 import rclpy.wait_for_message
 from rclpy.node import Node
@@ -85,9 +84,9 @@ class OdometrySubscriber(Node):
         )
 
         # Initialize CSV file
-        self.log_directory = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "motor_tests","detection_logs", "csv")
+        self.log_directory = "/home/ansh/inter-iit_Team62/detection_tests/detection_logs/csv"
+        self.log_directory = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "detection_tests", "detection_logs", "csv")
         self.csv_filename = "/odometry_data_"
-        
         file_number = 0
         while os.path.exists(f"{self.log_directory}{self.csv_filename}{file_number}.csv"):
             file_number += 1
@@ -122,6 +121,11 @@ class OdometrySubscriber(Node):
             "Odometry subscriber started. Recording data to: " + self.csv_filename
         )
     
+    # def publish_integer(self, value):
+    #     msg = Int16()
+    #     msg.data = value
+    #     self.publisher_.publish(msg)
+    #     self.get_logger().info(f"Published integer: {msg.data}")
 
     def signal_handler(self, sig, frame):
         
@@ -230,6 +234,14 @@ class OdometrySubscriber(Node):
             f"{[self.timestamp, self.x, self.y, self.z, self.vx, self.vy, self.vz, self.ax, self.ay, self.az, self.roll, self.pitch, self.yaw, self.roll_rate, self.pitch_rate, self.yaw_rate]} - written to file"
         )
         
+        # if self.detected_failure == -1:
+        #     self.detect_failure()   
+        # else:
+        #     if(self.toggle==0):
+        #         self.toggle=1
+        #         self.publish_integer(self.detected_failure)
+        #         print("ASLA SORTED")
+
 def main(args=None):
     rclpy.init(args=args)
 

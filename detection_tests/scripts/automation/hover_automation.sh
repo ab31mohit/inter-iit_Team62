@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Function to display a loading bar for specified seconds
 loading_bar() {
     duration=$1
     bar=""
@@ -13,15 +12,9 @@ loading_bar() {
     printf "\n"
 }
 
-# echo "Starting QGround COntrol, MicroDDS, px4_gz_bridge node"
-# tmux new-session -d -s drone_automation
-# cho "Created new tmux session 'drone_automation'."
-
-# Array of heights to be used in the sessions
 heights=(2.5 5.0 7.5 10.0 12.5 15.0 17.5 20.0)
 failures=(1 2 3 4) # Motor failure indices (assuming motors are 1-indexed)
 
-# Total runs (4 heights * 4 failure scenarios)
 total_runs=$(( ${#heights[@]} * ${#failures[@]} ))
 
 # Run the entire process for each height and failure scenario
@@ -59,7 +52,7 @@ for height in "${heights[@]}"; do
             fi
 
             # Pane 0: Start the odometry subscriber Python script
-            tmux send-keys -t drone_automation.0 "python3 inter-iit_Team62/motor_tests/scripts/odometry_subscriber.py" C-m
+            tmux send-keys -t drone_automation.0 "python3 inter-iit_Team62/detection_tests/scripts/odometry_subscriber.py" C-m
             echo "Running Odometry Subscriber"
             loading_bar 1
 

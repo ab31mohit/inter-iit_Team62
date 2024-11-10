@@ -12,7 +12,6 @@ loading_bar() {
     printf "\n"
 }
 
-
 for ((run = 1; run<=3; run++)); do
     echo "Starting run for height 10m with motor failure 1"
 
@@ -29,13 +28,20 @@ for ((run = 1; run<=3; run++)); do
     echo "Set takeoff altitude to 10 m..."
     loading_bar 1
 
-    
     if((run==1)); then
+        echo "Starting Hovering Session"
         tmux send-keys -t drone_automation "commander takeoff" C-m
         echo "Sent 'commander takeoff' to SITL..."
         loading_bar 12
     fi
     if ((run==2)); then
+        echo "Starting Takeoff Session"
+        tmux send-keys -t drone_automation "commander takeoff" C-m
+        echo "Sent 'commander takeoff' to SITL..."
+        loading_bar 8
+    fi
+    if((run==3)); then
+        echo "Starting Landing Session"
         tmux send-keys -t drone_automation "commander takeoff" C-m
         echo "Sent 'commander takeoff' to SITL..."
         loading_bar 12
@@ -43,15 +49,10 @@ for ((run = 1; run<=3; run++)); do
         tmux send-keys -t drone_automation "commander land" C-m
             echo "Sent 'commander land' to SITL..."
             loading_bar 4
-
     fi
-    if((run==3)); then
-        tmux send-keys -t drone_automation "commander takeoff" C-m
-        echo "Sent 'commander takeoff' to SITL..."
-        loading_bar 7
-    fi
-    tmux send-keys -t drone_automation.0 "python3 inter-iit_Team62/motor_tests/scripts/odometry_subscriber.py" C-m
+    tmux send-keys -t drone_automation.0 "python3 inter-iit_Team62/detection_tests/scripts/odometry_subscriber.py" C-m
     echo "Running Odometry Subscriber"
+
     loading_bar 1
     tmux send-keys -t drone_automation "smf detect" C-m
     echo "Sent 'smf detect' to SITL... Starting Detection Deamon"
@@ -67,11 +68,6 @@ for ((run = 1; run<=3; run++)); do
     tmux kill-session -t drone_automation.0
     echo "Terminating Odometry session..."
     echo "Completed run for height 10 m with motor failure 1."
-    
-done
-echo "Automation script completed for all runs."rone_automation.0
-    echo "Terminating Odometry session..."
-    echo "Completed run for height 10 m with motor failure 1."
-    
+    sleep 5
 done
 echo "Automation script completed for all runs."

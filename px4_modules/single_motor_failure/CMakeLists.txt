@@ -42,5 +42,8 @@ px4_add_module(
         failure_detector.h                 # Failure Detector header
         failure_controller.cpp
         failure_controller.h
+        lqr.cpp
+        lqr.h
     DEPENDS
 )
+

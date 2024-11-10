@@ -55,7 +55,6 @@ class DataPlotterNode(Node):
         
         try:
             self.data = pd.read_csv(self.odometry_file_path)
-            # clean data by removing rows with lower timestamp than the first row
             self.data = self.data[self.data["timestamp"] >= self.data["timestamp"].iloc[0]]
             self.get_logger().info(f"Data shape: {self.data.shape}")
             self.get_logger().info(f"Columns: {self.data.columns.tolist()}")
@@ -115,7 +114,6 @@ class DataPlotterNode(Node):
         axes[0].legend(["x", "y", "z"])
         axes[0].grid(True)
         # for idx in injected_failure_indices:
-        # axes[0].axvline(x=timestamp_seconds_limited[injection_index], color="black", linestyle="dotted")
         axes[0].axvline(x=timestamp_seconds_limited[detection_index], color="red", linestyle="solid")
 
         # Velocity plots
@@ -124,7 +122,6 @@ class DataPlotterNode(Node):
         axes[1].set_ylabel("Velocity (m/s)")
         axes[1].legend(["vx", "vy", "vz"])
         axes[1].grid(True)
-        # axes[1].axvline(x=timestamp_seconds_limited[injection_index], color="black", linestyle="dotted")
         axes[1].axvline(x=timestamp_seconds_limited[detection_index], color="red", linestyle="solid")
 
         # Averaged acceleration plots
@@ -134,7 +131,6 @@ class DataPlotterNode(Node):
         axes[2].set_ylabel("Acceleration (m/s²)")
         axes[2].legend(["ax", "ay", "az"])
         axes[2].grid(True)
-        # axes[2].axvline(x=timestamp_seconds_limited[injection_index], color="black", linestyle="dotted")
         axes[2].axvline(x=timestamp_seconds_limited[detection_index], color="red", linestyle="solid")
         # Attitude plots
         axes[3].plot(timestamp_seconds_limited, data_limited[["roll", "pitch", "yaw"]])
@@ -142,7 +138,6 @@ class DataPlotterNode(Node):
         axes[3].set_ylabel("Angle (rad)")
         axes[3].legend(["roll", "pitch", "yaw"])
         axes[3].grid(True)
-        # axes[3].axvline(x=timestamp_seconds_limited[injection_index], color="black", linestyle="dotted")
         axes[3].axvline(x=timestamp_seconds_limited[detection_index], color="red", linestyle="solid")
 
         # Averaged attitude rate plots
@@ -152,7 +147,6 @@ class DataPlotterNode(Node):
         axes[4].set_ylabel("Rate (rad/s)")
         axes[4].legend(["roll_rate", "pitch_rate", "yaw_rate"])
         axes[4].grid(True)
-        # axes[4].axvline(x=timestamp_seconds_limited[injection_index], color="black", linestyle="dotted")
         axes[4].axvline(x=timestamp_seconds_limited[detection_index], color="red", linestyle="solid")
         # Set common x-label
         fig.text(0.5, 0.02, "Time (seconds)", ha="center", fontsize=12)
@@ -197,61 +191,63 @@ class DataPlotterNode(Node):
             rclpy.shutdown()
 
 def main(args=None):
-    
-    rclpy.init(args=args)
-    # csv_directory_path = "~/inter-iit_Team62/detection_logs/CSV"
-    csv_directory_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "motor_tests","detection_logs", "csv")
-    px4_logs_directory_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "motor_tests","detection_logs", "px4_logs")
-    plots_directory_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "motor_tests","detection_logs", "plots")
 
-    odometry_files = sorted([f for f in os.listdir(csv_directory_path) if f.startswith("odometry_data_") and f.endswith(".csv")])
-    px4_log_files = sorted([f for f in os.listdir(px4_logs_directory_path) if f.startswith("px4_logs_") and f.endswith(".csv")])
+    rclpy.init(args=None)
 
-    for odometry_file, px4_log_file in zip(odometry_files, px4_log_files):  
-        index = odometry_file.split("_")[-1].split(".")[0]
-        odometry_file_path = os.path.join(csv_directory_path, odometry_file)
-        px4_log_file_path = os.path.join(px4_logs_directory_path, px4_log_file)
-        plot_file_path = os.path.join(plots_directory_path, f"odometry_plot_{index}.png")
+    try:
+        csv_directory_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "detection_tests", "detection_logs", "csv")
+        px4_logs_directory_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "detection_tests", "detection_logs", "px4_logs")
+        plots_directory_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "detection_tests", "detection_logs", "plots")
+
+        odometry_files = sorted([f for f in os.listdir(csv_directory_path) if f.startswith("odometry_data_") and f.endswith(".csv")])
+        px4_log_files = sorted([f for f in os.listdir(px4_logs_directory_path) if f.startswith("px4_logs_") and f.endswith(".csv")])
+
+        for odometry_file, px4_log_file in zip(odometry_files, px4_log_files):
+            index = odometry_file.split("_")[-1].split(".")[0]
+            odometry_file_path = os.path.join(csv_directory_path, odometry_file)
+            px4_log_file_path = os.path.join(px4_logs_directory_path, px4_log_file)
+            plot_file_path = os.path.join(plots_directory_path, f"odometry_plot_{index}.png")
+
+            data_plotter = DataPlotterNode(odometry_file_path, px4_log_file_path, plot_file_path)
+
+            try:
+                data_plotter.execute()
+            except KeyboardInterrupt:
+                break
+            finally:
+                data_plotter.destroy_node()
+                rclpy.init(args=None)
+
+        # Compiling results File:
+        # Correct = Correct_1 + Correct_2 + Correct_3 + Correct_4
+        Accuracy = (true_positives + true_negatives) * 100 / Total if Total > 0 else 0
+        # true_accuracy = (Correct_1+Correct_2+Correct_3+Correct_4)*100/Total if Total>0 else 0
+        data = {
+            "Total_Sessions": Total,
+            "Accuracy": Accuracy,
+            "True_Positives": true_positives,
+            "True_Negatives": true_negatives,
+            "False_positives": false_negatives,
+            'False_Negatives': false_negatives,
+            "Correct_1": Correct_1,
+            "Correct_2": Correct_2,
+            "Correct_3": Correct_3,
+            "Correct_4": Correct_4,
+            "Average_Latancy": np.mean(Latency),
+        }
         
-        data_plotter = DataPlotterNode(odometry_file_path, px4_log_file_path, plot_file_path)
-        
-        try:
-            data_plotter.execute() 
-        except KeyboardInterrupt:
-            break  
-        finally:
-            data_plotter.destroy_node()
-            rclpy.init(args=args)
+        results_file_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "detection_tests", "detection_logs", "results.csv")
 
-    # Compiling results File:
-    # Correct = Correct_1 + Correct_2 + Correct_3 + Correct_4
-    Accuracy = (true_positives + true_negatives)*100/(Total) if Total>0 else 0
-    # true_accuracy = (Correct_1+Correct_2+Correct_3+Correct_4)*100/Total if Total>0 else 0
-    data = {
-        "Total_Sessions": Total,
-        "Accuracy": Accuracy,
-        "True_Positives": true_positives,
-        "True_Negatives": true_negatives,
-        "False_positives": false_negatives,
-        'False_Negatives': false_negatives,
-        "Correct_1": Correct_1,
-        "Correct_2": Correct_2,
-        "Correct_3": Correct_3,
-        "Correct_4": Correct_4,
-        "Average_Latancy": np.mean(Latency),
-    } 
-    results_file_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "motor_tests","detection_logs", "results.csv")
+        with open(results_file_path, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Metric", "Value"])
+            for key, value in data.items():
+                writer.writerow([key, value])
 
-    with open(results_file_path, mode="w", newline="") as file:
-        writer = csv.writer(file)
+    finally:
+        # Shutdown rclpy
+        rclpy.shutdown()
 
-        writer.writerow(["Metric", "Value"])
-
-        for key, value in data.items():
-            writer.writerow([key, value])
-
-    # Shutdown rclpy    
-    rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

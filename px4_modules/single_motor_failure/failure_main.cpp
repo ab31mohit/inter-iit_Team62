@@ -96,7 +96,7 @@ int daemon_detector(int argc, char **argv)
 	px4::init(argc, argv, "Motor Failure Detector");
 
 	printf("Starting failure detection \n");
-    log_directory = "~/inter-iit_Team62/motor_tests/detection_logs/px4_logs";
+    	log_directory = "~/inter-iit_Team62/detection_tests/detection_logs/px4_logs";
 	
 	Detector detection;
 
@@ -144,12 +144,12 @@ int daemon_detector(int argc, char **argv)
         PX4_WARN("Failed to open CSV log file: %s\n", file_path.c_str());
     }
 
-	if(detected_motor > 0) {
-	  printf("Starting Failure Control \n");
-          Controller control;
-          control.main();
+	 if(detected_motor > 0) {
+	   printf("Starting Failure Control \n");
+           Controller control;
+           control.main();
 
-	}
+	 }
 	
 	return 0;
 }
