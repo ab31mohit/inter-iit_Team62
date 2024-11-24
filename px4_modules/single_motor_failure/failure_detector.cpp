@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
+ *   Copyright (C) 2024 Inter-IIT Team 62. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,10 +29,9 @@
  ****************************************************************************/
 
 /**
- * @file hello_example.cpp
- * Example for Linux
- *
- * @author Mark Charlebois <charlebm@gmail.com>
+ * @file  failure_detector.cpp
+ * Implementation of Detector Class
+ * Detects motor failure using adaptive thresholding on the accelation values
  */
 
 
@@ -62,22 +61,23 @@ int Detector::main(){
 
 
     while (!appState.exitRequested()) {
-        
+
         px4_sleep(0.001);
+
         //Update odometry
-        
+
         odometryUpdate(vehicle_odometry_fd, odometry);
 
-        
+
         //Run detect_failure
 
          if (detected_motor_failure == -1) {
             detectFailure();
            }
-          
+
          else{
             return (detected_motor_failure+1);
-         } 
+         }
 
 
     }
@@ -87,7 +87,7 @@ int Detector::main(){
     return 0;
 }
 
-
+// Calculates roll, pitch, yaw from quaternion
 double* Detector::quaternionToRPY (double qw, double qx, double qy, double qz){
 
     double* rpy = new double[3];
@@ -119,6 +119,7 @@ double* Detector::quaternionToRPY (double qw, double qx, double qy, double qz){
 
 }
 
+// Calculates x, y, z accelerations
     void Detector::calculateAccelerations(int timestmp) {
         if (prev_timestamp <= 0.0) {
             ax = ay = az = 0.0;
@@ -133,6 +134,7 @@ double* Detector::quaternionToRPY (double qw, double qx, double qy, double qz){
         }
     }
 
+// Calculate normalised angles
     double Detector::normalizeAngle(double angle) {
         while (angle > M_PI) {
             angle -= 2 * M_PI;
@@ -143,11 +145,13 @@ double* Detector::quaternionToRPY (double qw, double qx, double qy, double qz){
         return angle;
     }
 
+// Calculates angular rate
     double Detector::calculateAngularRate(double current, double previous, double dt) {
         double diff = normalizeAngle(current - previous);
         return dt > 0 ? diff / dt : 0.0;
     }
 
+// Calculates p,q,r rates
     void Detector::calculateAttitudeRates(int timestmp, double roll_rad, double pitch_rad, double yaw_rad) {
         if (prev_timestamp <= 0.0) {
             roll_rate = pitch_rate = yaw_rate = 0.0;
@@ -166,45 +170,73 @@ double* Detector::quaternionToRPY (double qw, double qx, double qy, double qz){
         }
     }
 
+
     void Detector::detectFailure() {
+
+        //For calculating average over 20 values
         if (last_20.size() < 20) {
-            last_20.push_back({az, pitch_rate, yaw_rate});
+            last_20.push_back({az, roll_rate, pitch_rate, yaw_rate});
         } else {
             last_20.erase(last_20.begin());
-            last_20.push_back({az, pitch_rate, yaw_rate});
+            last_20.push_back({az, roll_rate, pitch_rate, yaw_rate});
         }
 
-        double avg_az = 0.0, avg_pitch_rate = 0.0, avg_yaw_rate = 0.0;
+        double avg_az = 0.0, avg_roll_rate = 0.0, avg_pitch_rate = 0.0, avg_yaw_rate = 0.0;
         for (const auto& data : last_20) {
             avg_az += data[0];
-            avg_pitch_rate += data[1];
-            avg_yaw_rate += data[2];
+            avg_roll_rate += data[1];
+            avg_pitch_rate += data[2];
+            avg_yaw_rate += data[3];
+        }
+        int size = last_20.size();
+        avg_az /= size;
+        avg_roll_rate /= size;
+        avg_pitch_rate /= size;
+        avg_yaw_rate /= size;
+
+        // Calculating average slope for az and roll_rate
+
+        double az_slope = 0.0, roll_rate_slope = 0.0;
+        if (size >= 5) {
+            az_slope = (last_20[size - 1][0] - last_20[size - 5][0]) / 5.0;
+            roll_rate_slope = (last_20[size - 1][1] - last_20[size - 5][1]) / 5.0;
         }
 
-        avg_az /= last_20.size();
-        avg_pitch_rate /= last_20.size();
-        avg_yaw_rate /= last_20.size();
+        // Dynamic threshold adjustment based on slope
+        if (az_slope > 0) {
+            threshold_acceleration = std::max(1.5, 3.0 - az_slope * slope_sensitivity_factor_az);
+        } else {
+            threshold_acceleration = 3.0;
+        }
 
-        if (avg_az > threshold_acceleration) {
-            failure_detected_timestamp = timestamp;
+        threshold_roll_rate = std::max(25.0, 50.0 - abs(roll_rate_slope) * slope_sensitivity_factor_roll_rate);
+        // threshold_acceleration = 3.0;
+        // threshold_roll_rate = 50.0;
+        // Motor failure detection
+        if (avg_az >= threshold_acceleration || abs(avg_roll_rate)>threshold_roll_rate) {
+            // failure_detected_timestamp = timestamp;
             if (avg_pitch_rate < 0 && avg_yaw_rate < 0) {
                 detected_motor_failure = 0;
-            } else if (avg_pitch_rate > 0 && avg_yaw_rate < 0) {
+            }
+            else if (avg_pitch_rate > 0 && avg_yaw_rate < 0) {
                 detected_motor_failure = 1;
-            } else if (avg_pitch_rate < 0 && avg_yaw_rate > 0) {
+            }
+            else if (avg_pitch_rate < 0 && avg_yaw_rate > 0) {
                 detected_motor_failure = 2;
-            } else if (avg_pitch_rate > 0 && avg_yaw_rate > 0) {
+            }
+            else if (avg_pitch_rate > 0 && avg_yaw_rate > 0) {
                 detected_motor_failure = 3;
             }
         }
     }
 
+// Updates odometry to get latest values
     void Detector::odometryUpdate(int vehicle_odometry_fd, vehicle_odometry_s &odometry) {
-        
+
         orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
 
         double current_timestamp = odometry.timestamp;
-        
+
         timestamp = current_timestamp;
 
         x = odometry.position[0];

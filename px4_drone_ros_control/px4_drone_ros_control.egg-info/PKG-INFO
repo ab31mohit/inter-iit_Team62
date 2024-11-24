@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: px4_drone_ros_control
+Version: 0.0.0
+Summary: Package description
+Maintainer: Rajeev Gupta
+Maintainer-email: your_email@example.com
+License: License declaration
+License-File: LICENSE
+Requires-Dist: setuptools

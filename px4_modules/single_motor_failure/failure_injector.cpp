@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
+ *   Copyright (C) 2024 Inter-IIT Team 62. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,10 +29,10 @@
  ****************************************************************************/
 
 /**
- * @file hello_example.cpp
- * Example for Linux
+ * @file failure_injector.cpp
+ * Implementation of Injector Class
+ * Injects failure in desired motor
  *
- * @author Mark Charlebois <charlebm@gmail.com>
  */
 
 #include "failure_injector.h"
@@ -47,26 +47,27 @@
 #include <uORB/uORB.h>
 #include <uORB/topics/actuator_motors.h>
 
-px4::AppState Injector::appState;
+px4::AppState Injector::appState;   /* track requests to terminate app */
 
 int Injector::main(int motor_index)
 {
     appState.setRunning(true);
-    int actuator_outputs_fd = orb_subscribe(ORB_ID(actuator_motors));
+    int actuator_outputs_fd = orb_subscribe(ORB_ID(actuator_motors));      // Subscribing to the actuator_motors topic so that we do not change the values on other motors
     actuator_motors_s controller;
     actuator_motors_s act = {};  // Zero-initialized
-    orb_advert_t act_pub_fd = orb_advertise(ORB_ID(actuator_motors), &act);
+    orb_advert_t act_pub_fd = orb_advertise(ORB_ID(actuator_motors), &act); // Advertising to the actuator_motors topic for publishing to the motor to be failed
 
     printf("Injecting failure at instance %d...\n", motor_index);
 
-    while (!appState.exitRequested()) {
-        px4_sleep(0.1);
-        updateController(actuator_outputs_fd, controller);
-        failMotorIndex(controller, act, motor_index);
-        orb_publish(ORB_ID(actuator_motors), act_pub_fd, &act);
-    }
+    // In each iteration of loop, fail the desired motor by publishing NaN on it
 
-    return 0;		
+    while (!appState.exitRequested() ) {
+        px4_sleep(0.1);
+        updateController(actuator_outputs_fd, controller);                 // Subscribing thrust values for other motors
+        failMotorIndex(controller, act, motor_index);                      // Failing the desired motor
+        orb_publish(ORB_ID(actuator_motors), act_pub_fd, &act);            // Publishing on the actuator_motors
+    }
+    return 0;
 }
 
 void Injector::updateController(int actuator_outputs_fd, actuator_motors_s &controller) {
@@ -77,6 +78,6 @@ void Injector::failMotorIndex(const actuator_motors_s &controller, actuator_moto
     int num_controls = controller.NUM_CONTROLS;
 
     for (int i = 0; i < num_controls; i++) {
-        act.control[i] = (motor_index == 0 || i == (motor_index - 1)) ? (float)nan("1") : controller.control[i];
+        act.control[i] = (motor_index == 0 || i == (motor_index - 1)) ? (float)nan("1") : controller.control[i];  // Publish NaN to fail the motor
     }
 }

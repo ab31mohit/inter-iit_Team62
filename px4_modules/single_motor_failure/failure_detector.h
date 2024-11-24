@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
+ *   Copyright (C) 2024 Inter-IIT Team 62. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,10 +29,9 @@
  ****************************************************************************/
 
 /**
- * @file hello_example.cpp
- * Example for Linux
+ * @file failure_detector.cpp
+ * Header for Detector Class
  *
- * @author Mark Charlebois <charlebm@gmail.com>
  */
 
 #pragma once
@@ -56,15 +55,19 @@ public:
     // Current state variables
     double ax = 0.0, ay = 0.0, az = 0.0;
     double roll_rate = 0.0, pitch_rate = 0.0, yaw_rate = 0.0;
-    double threshold_acceleration = 4.0;  // Example threshold
+    // double threshold_acceleration = 4.0;  // Example threshold
     int detected_motor_failure = -1;
     int failed_motor = -1;
     int timestamp = 0;
     int motor_failed_timestamp = 0;
     int failure_detected_timestamp = 0;
 
+    double threshold_acceleration = 3.0, threshold_roll_rate = 50;
+    double slope_sensitivity_factor_az = 1;
+    double slope_sensitivity_factor_roll_rate = 10;
+
     // Vectors for storing the last 20 data points
-    std::vector<std::array<double, 3>> last_20;
+    std::vector<std::array<double, 4>> last_20;
 
     // Previous state variables for calculating deltas
     double prev_vx = 0.0, prev_vy = 0.0, prev_vz = 0.0;
@@ -86,8 +89,8 @@ public:
     void odometryUpdate(int vehicle_odometry_fd, vehicle_odometry_s &vehicle_odometry);
 
 
-    
+
 
 private:
-    
+
 };

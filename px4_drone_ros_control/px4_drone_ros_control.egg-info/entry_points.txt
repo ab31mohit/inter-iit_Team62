@@ -1,0 +1,2 @@
+[console_scripts]
+script_name = px4_drone_ros_control.test_command_publisher:main

@@ -33,12 +33,23 @@ install(
     config/
   DESTINATION share/${PROJECT_NAME}/config
 )
+install(
+  DIRECTORY
+    models/
+  DESTINATION share/${PROJECT_NAME}/models
+)
+install(
+  DIRECTORY
+    worlds/
+  DESTINATION share/${PROJECT_NAME}/worlds
+)
 
 install(PROGRAMS
   scripts/motor_command_bypass_node.py
   scripts/odometry_subscriber.py
   scripts/data_plotter_node.py
   scripts/control_bridge_node.py
+  scripts/test_command_publisher.py
 
   scripts/QGCS_launcher.py
   scripts/MicroXRCEAgent_launcher.py

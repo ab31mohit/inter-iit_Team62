@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
+ *   Copyright (C) 2024 Inter-IIT Team 62. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,10 +29,10 @@
  ****************************************************************************/
 
 /**
- * @file hello_example.h
- * Example app for Linux
+ * @file failure_injector.h
+ * header file for Injector Class
  *
- * @author Mark Charlebois <charlebm@gmail.com>
+ *
  */
 #pragma once
 

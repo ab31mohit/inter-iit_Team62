@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
+ *   Copyright (C) 2024 Inter-IIT Team 62. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,16 @@
  ****************************************************************************/
 
 /**
- * @file hello_start.cpp
- *
- * @author Thomas Gubler <thomasgubler@gmail.com>
- * @author Mark Charlebois <mcharleb@gmail.com>
+ * @file failure_main.cpp
+ *   Entry point for single_motor_failure module
+ *   smf detect to start detector daemon
+ *   smf start {instance} to start injector daemon
  */
+
+
 #include "failure_injector.h"
 #include "failure_detector.h"
+#include "failure_controller.h"
 
 #include <px4_platform_common/log.h>
 #include <px4_platform_common/app.h>
@@ -53,43 +56,21 @@
 static int daemon_injector_task;             /* Handle of deamon task / thread */
 static int daemon_detector_task;
 
+
 int injection_timestamp;
 
-//using namespace px4;
 
 int vehicle_odometry_fd;
 vehicle_odometry_s odometry;
-// vehicle_odometry_s timer;
 
-int daemon_detector(int argc, char **argv)
-{
-	px4::init(argc, argv, "Motor Failure Detector");
 
-	printf("Starting failure detection \n");
-    
-	// int vehicle_odometry_fd = orb_subscribe(ORB_ID(vehicle_odometry));
-    // vehicle_odometry_s odometry;
-
-	Detector detection;
-
-	int detected_motor = detection.main(); 
-
-    orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
-
-	int detected_timestamp = odometry.timestamp;
-	double latency = (detected_timestamp - injection_timestamp) * 1e-6;
-	printf("Failure detected at motor %d ...... \nDetection Timestamp = %d \nDetection latency = %f \n", detected_motor,detected_timestamp
-	, latency);
-	printf("goodbye\n");
-	return 0;
-}
-
+// Function for the Injector daemon, injects failure in desired motor
 
 int daemon_injector(int argc, char **argv)
 {
-	px4::init(argc, argv, "Motor Failure Injector");
+	px4::init(argc, argv, "Motor Failure Injector");  // Startup function, prints welcome message
 
-    
+
 	    // Check if we received the motor ID argument
     if (argc > 1) {
 
@@ -98,19 +79,19 @@ int daemon_injector(int argc, char **argv)
         const char* motor_id = argv[1];
         printf("Starting failure injection at motor instance %s\n", motor_id);
 
-        int motor_index = atoi(motor_id); 
+        int motor_index = atoi(motor_id);
 
-		// int vehicle_odometry_fd = orb_subscribe(ORB_ID(actuator_motors));
-		// vehicle_odometry_s timer;
-		orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);
-	 	injection_timestamp = odometry.timestamp;
+	orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);   // Updating odometry value for timestamp
+	injection_timestamp = odometry.timestamp;                             // Injection Timestamp to calculate latency
 
-		printf("Injection at %d \n", injection_timestamp);
+	printf("Injection at %d \n", injection_timestamp);
+
+        // Call the main function of Injector class for failure injection in the desired motor
 
         Injector injection;
-        injection.main(motor_index); 
+        injection.main(motor_index);
 
-		
+
 
 
     } else {
@@ -123,11 +104,54 @@ int daemon_injector(int argc, char **argv)
 }
 
 
+// Function for the Detector daemon, detects motor failure and starts control
+
+int daemon_detector(int argc, char **argv)
+{
+	px4::init(argc, argv, "Motor Failure Detector");
+
+	printf("Starting failure detection \n");
+
+
+	Detector detection;
+
+	// Call the main function of Detector class to start detecting failure
+
+	int detected_motor = detection.main();
+
+        orb_copy(ORB_ID(vehicle_odometry), vehicle_odometry_fd, &odometry);    // Updating odometry value for timestamp
+
+	int detected_timestamp = odometry.timestamp;                           // Detection Timestamp to calculate latency
+	double latency = (detected_timestamp - injection_timestamp) * 1e-6;    // Latency
+	printf("Failure detected at motor %d ...... \nDetection Timestamp = %d \nDetection latency = %f \n", detected_motor,detected_timestamp
+	, latency);
+	printf("goodbye\n");
+
+
+	// If some motor failure is detected start control
+
+	if(detected_motor > 0) {
+
+	  // Call the main function of Controller class
+
+	  printf("Starting Failure Control \n");
+          Controller control;
+          control.main(detected_motor);
+
+	}
+
+
+	return detected_motor;
+}
+
+
+// Entry point for the module, handles the command line inputs to start the desired background task (daemon)
+
 
 extern "C" __EXPORT int smf_main(int argc, char *argv[]);
 int smf_main(int argc, char *argv[])
 {
-    
+
 	vehicle_odometry_fd = orb_subscribe(ORB_ID(vehicle_odometry));
 
 
@@ -145,8 +169,10 @@ int smf_main(int argc, char *argv[])
 		}
 
 		char *motor_failure_args[2];
-        motor_failure_args[0] = argv[2];  // Motor ID to fail
-        motor_failure_args[1] = nullptr;   // Null-terminate the array
+                motor_failure_args[0] = argv[2];  // Motor ID to fail
+                motor_failure_args[1] = nullptr;   // Null-terminate the array
+
+		// Launch Injector Daemon
 
 		daemon_injector_task =  px4_task_spawn_cmd("Motor Failure",
 						 	    SCHED_DEFAULT,
@@ -166,12 +192,16 @@ int smf_main(int argc, char *argv[])
 			return 0;
 		}
 
+		// Launch Detector Daemon
+
 		daemon_detector_task =  px4_task_spawn_cmd("Failure Detector",
 						 	    SCHED_DEFAULT,
-						        SCHED_PRIORITY_MAX - 5,
+						                SCHED_PRIORITY_MAX - 5,
 								2000,
 						 		daemon_detector,
 						 		(argv) ? (char *const *)&argv[2] : (char *const *)nullptr);
+
+		printf("\nvalue of detector is %d",daemon_detector_task);
 
 
 		return 0;

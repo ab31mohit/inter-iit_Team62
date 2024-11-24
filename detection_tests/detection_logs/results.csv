@@ -1,0 +1,12 @@
+Metric,Value
+Total_Sessions,3
+Accuracy,100.0
+True_Positives,3
+True_Negatives,0
+False_positives,0
+False_Negatives,0
+Correct_1,3
+Correct_2,0
+Correct_3,0
+Correct_4,0
+Average_Latancy,0.050666666666666665
