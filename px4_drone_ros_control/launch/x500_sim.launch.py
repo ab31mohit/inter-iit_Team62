@@ -30,6 +30,7 @@ def generate_launch_description():
 
     gz_sim = ExecuteProcess(
         cmd=['gz', 'sim', '-r', world_file],  # Use the world_file with the sdf argument
+        # cmd=['gz', 'sim', world_file],  # Use the world_file with the sdf argument
         output='screen'
     )
 

@@ -169,14 +169,14 @@ class CommandPublisherNode(Node):
         
     
     def command_pub(self, msg: list):
-        # self.controller_command_received[0] = msg[0]
-        # self.controller_command_received[1] = msg[1]
+        self.controller_command_received[0] = msg[0]
+        self.controller_command_received[1] = msg[1]
         # self.controller_command_received[2] = msg[2]
         # self.controller_command_received[3] = msg[3]
-        # self.actuators_msg.header.stamp = self.get_clock().now().to_msg()
-        # # self.get_logger().info(f'Recieved Motor speed from PX4: {self.controller_command_received[0]} {self.controller_command_received[1]} {self.controller_command_received[2]} {self.controller_command_received[3]}')
-        # ## dot product
-        # self.actuators_msg.velocity = [float(v) for v in self.controller_command_received]
+        self.actuators_msg.header.stamp = self.get_clock().now().to_msg()
+        # self.get_logger().info(f'Recieved Motor speed from PX4: {self.controller_command_received[0]} {self.controller_command_received[1]} {self.controller_command_received[2]} {self.controller_command_received[3]}')
+        ## dot product
+        self.actuators_msg.velocity = [float(v) for v in self.controller_command_received]
         # self.motor_command_pub.publish(self.actuators_msg)
         return 0
         

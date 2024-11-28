@@ -58,12 +58,13 @@
       <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0</timeConstantUp>
       <timeConstantDown>0.0</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
+      <maxRotVelocity>2000.0</maxRotVelocity>
       <motorConstant>17.0916e-06</motorConstant>
       <momentConstant>0.016</momentConstant>
       <commandSubTopic>command/motor_speed</commandSubTopic>
       <actuator_number>0</actuator_number>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <!-- <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient> -->
+      <rotorDragCoefficient>8.06428e-04</rotorDragCoefficient>
       <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
@@ -74,12 +75,13 @@
       <turningDirection>ccw</turningDirection>
       <timeConstantUp>0.0</timeConstantUp>
       <timeConstantDown>0.0</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
+      <maxRotVelocity>2000.0</maxRotVelocity>
       <motorConstant>17.0916e-06</motorConstant>
       <momentConstant>0.016</momentConstant>
       <commandSubTopic>command/motor_speed</commandSubTopic>
       <actuator_number>1</actuator_number>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <!-- <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient> -->
+      <rotorDragCoefficient>8.06428e-04</rotorDragCoefficient>
       <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
@@ -90,12 +92,13 @@
       <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0</timeConstantUp>
       <timeConstantDown>0.0</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
+      <maxRotVelocity>2000.0</maxRotVelocity>
       <motorConstant>17.0916e-06</motorConstant>
       <momentConstant>0.016</momentConstant>
       <commandSubTopic>command/motor_speed</commandSubTopic>
       <actuator_number>2</actuator_number>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <!-- <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient> -->
+      <rotorDragCoefficient>8.06428e-04</rotorDragCoefficient>
       <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
@@ -106,12 +109,13 @@
       <turningDirection>cw</turningDirection>
       <timeConstantUp>0.0</timeConstantUp>
       <timeConstantDown>0.0</timeConstantDown>
-      <maxRotVelocity>1000.0</maxRotVelocity>
+      <maxRotVelocity>2000.0</maxRotVelocity>
       <motorConstant>17.0916e-06</motorConstant>
       <momentConstant>0.016</momentConstant>
       <commandSubTopic>command/motor_speed</commandSubTopic>
       <actuator_number>3</actuator_number>
-      <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient>
+      <!-- <rotorDragCoefficient>8.06428e-05</rotorDragCoefficient> -->
+      <rotorDragCoefficient>8.06428e-04</rotorDragCoefficient>
       <rollingMomentCoefficient>1e-06</rollingMomentCoefficient>
       <rotorVelocitySlowdownSim>10</rotorVelocitySlowdownSim>
       <motorType>velocity</motorType>
