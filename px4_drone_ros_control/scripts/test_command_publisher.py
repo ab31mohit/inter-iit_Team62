@@ -80,7 +80,7 @@ class CommandPublisherNode(Node):
         self.actuators_msg.velocity = [float(0), float(0), float(0), float(0)]
         
         # Control and Detection
-        self.rate = self.create_rate(5)  # 5 Hz means a 200ms interval
+        # self.rate = self.create_rate(5)  # 5 Hz means a 200ms interval
         
         # Initialize class attributes
         self.timestamp = None
@@ -101,7 +101,7 @@ class CommandPublisherNode(Node):
         
         # Create a timer to call command_pub every 1 second (adjust as needed)
         self.frequency = 100
-        self.timer = self.create_timer(1/self.frequency, self.timer_callback)  # 1 second interval
+        # self.timer = self.create_timer(1/self.frequency, self.timer_callback)  # 1 second interval
         
         # for odometry info
         self.last_secs_nsecs = [0, 0]
@@ -112,9 +112,9 @@ class CommandPublisherNode(Node):
         self.queue_alpha = deque(maxlen=self.queue_len)
         self.counter = 0
 
-    def timer_callback(self):
-        """Callback function for the timer to publish commands."""
-        self.command_pub(self.command_values)
+    # def timer_callback(self):
+    #     """Callback function for the timer to publish commands."""
+    #     self.command_pub(self.command_values)
 
     def calculate_accelerations(self, timestamp):
         """Calculate accelerations from velocity changes"""
@@ -171,13 +171,13 @@ class CommandPublisherNode(Node):
     def command_pub(self, msg: list):
         self.controller_command_received[0] = msg[0]
         self.controller_command_received[1] = msg[1]
-        # self.controller_command_received[2] = msg[2]
-        # self.controller_command_received[3] = msg[3]
+        self.controller_command_received[2] = msg[2]
+        self.controller_command_received[3] = msg[3]
         self.actuators_msg.header.stamp = self.get_clock().now().to_msg()
         # self.get_logger().info(f'Recieved Motor speed from PX4: {self.controller_command_received[0]} {self.controller_command_received[1]} {self.controller_command_received[2]} {self.controller_command_received[3]}')
         ## dot product
         self.actuators_msg.velocity = [float(v) for v in self.controller_command_received]
-        # self.motor_command_pub.publish(self.actuators_msg)
+        self.motor_command_pub.publish(self.actuators_msg)
         return 0
         
 
@@ -192,6 +192,8 @@ def main(args=None):
                         help='Four command values to publish')
     args = parser.parse_args()
     command_publisher_node = CommandPublisherNode(args.command)
+    cmd = [752.5507528644948, 752.5507528644948, 225.76522585934845, 0]
+    command_publisher_node.command_pub(cmd)
     try:
         rclpy.spin(command_publisher_node)
     except KeyboardInterrupt:
