@@ -1,0 +1,5 @@
+menuconfig EXAMPLES_GAZEBO_CLASSIC_FAULT_TOLERANT_CONTROL
+	bool "gazebo_classic_fault_tolerant_control"
+	default n
+	---help---
+		Enable support for hover

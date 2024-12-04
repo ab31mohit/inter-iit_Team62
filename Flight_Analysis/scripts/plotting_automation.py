@@ -66,8 +66,6 @@ class DataPlotterNode(Node):
             self.latency = self.failure_data.iloc[0, 2]  
             self.detected_motor = self.failure_data.iloc[0, 3]
             self.injected_motor = self.failure_data.iloc[0, 4]
-            # self.detection_unix = self.failure_data.iloc[0,5]
-            # self.injection_unix = self.failure_data.iloc[0,6]
             return True
         except Exception as e:
             self.get_logger().error(f"Error reading file: {str(e)}")
@@ -200,7 +198,7 @@ def main(args=None):
         plots_directory_path = os.path.join(os.path.expanduser("~"), "inter-iit_Team62", "Flight_Analysis", "detection_logs", "plots")
 
         odometry_files = sorted([f for f in os.listdir(csv_directory_path) if f.startswith("odometry_data_") and f.endswith(".csv")])
-        px4_log_files = sorted([f for f in os.listdir(px4_logs_directory_path) if f.startswith("px4_logs_") and f.endswith(".csv")])
+        px4_log_files = sorted([f for f in os.listdir(px4_logs_directory_path) if f.startswith("px4_log_") and f.endswith(".csv")])
 
         for odometry_file, px4_log_file in zip(odometry_files, px4_log_files):
             index = odometry_file.split("_")[-1].split(".")[0]

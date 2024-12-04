@@ -22,7 +22,7 @@ for ((run = 1; run<=3; run++)); do
 
     tmux send-keys -t drone_automation "cd ~/PX4-Autopilot && make px4_sitl gz_x500" C-m
     echo "Starting PX4 SITL with Gazebo Harmonic..."
-    loading_bar 15
+    loading_bar 16
 
     tmux send-keys -t drone_automation "param set MIS_TAKEOFF_ALT 10" C-m
     echo "Set takeoff altitude to 10 m..."
@@ -48,7 +48,7 @@ y" C-m
 
     tmux send-keys -t drone_automation "smf start 1" C-m
     echo "Sent 'smf start' to SITL... Starting Injection Deamon"
-    loading_bar 2
+    loading_bar 6
 
     tmux send-keys -t drone_automation C-c
     echo "Terminating SITL session..."

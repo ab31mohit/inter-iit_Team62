@@ -45,44 +45,6 @@ using Vector = std::vector<double>;
 
 
 
-
-// Computes the inverse of a 2x2 matrix
-Matrix LQR::inverse2x2(const Matrix &a) {
-    double determinant = a[0][0] * a[1][1] - a[0][1] * a[1][0];
-    if (determinant <= 0) {
-        throw std::runtime_error("Matrix is singular and cannot be inverted.");
-    }
-    double invDet = 1.0 / determinant;
-    Matrix result(2, std::vector<double>(2));
-    result[0][0] =  a[1][1] * invDet;
-    result[0][1] = -a[0][1] * invDet;
-    result[1][0] = -a[1][0] * invDet;
-    result[1][1] =  a[0][0] * invDet;
-    return result;
-}
-
-// Returns the transpose of a matrix
-Matrix LQR::transpose(const Matrix &a) {
-    int rows = a.size();
-    int cols = a[0].size();
-    Matrix result(cols, std::vector<double>(rows));
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            result[j][i] = a[i][j];
-        }
-    }
-    return result;
-}
-
-// Creates an identity matrix of a given size
-Matrix LQR::identityMatrix(int size) {
-    Matrix identity(size, std::vector<double>(size, 0.0));
-    for (int i = 0; i < size; ++i) {
-        identity[i][i] = 1.0;
-    }
-    return identity;
-}
-
 // Multiplies a matrix by a vector
 Vector LQR::multiply(const Matrix &a, const Vector &b) {
     Vector result(a.size());
@@ -95,94 +57,10 @@ Vector LQR::multiply(const Matrix &a, const Vector &b) {
     return result;
 }
 
-// Multiplies two matrices
-Matrix LQR::multiply(const Matrix &a, const Matrix &b) {
-    Matrix result(a.size(), std::vector<double>(b[0].size()));
-    for (size_t i = 0; i < a.size(); ++i) {
-        for (size_t j = 0; j < b[0].size(); ++j) {
-            result[i][j] = 0;
-            for (size_t k = 0; k < b.size(); ++k) {
-                result[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-    return result;
-}
-// Adds two matrices element-wise
-Matrix LQR::matrixAdd(const Matrix &a, const Matrix &b) {
-    Matrix result(a.size(), std::vector<double>(a[0].size()));
-    for (size_t i = 0; i < a.size(); ++i) {
-        for (size_t j = 0; j < a[0].size(); ++j) {
-            result[i][j] = a[i][j] + b[i][j];
-        }
-    }
-    return result;
-}
-
-// Subtracts two matrices element-wise
-Matrix LQR::matrixSubtract(const Matrix &a, const Matrix &b) {
-    Matrix result(a.size(), std::vector<double>(a[0].size()));
-    for (size_t i = 0; i < a.size(); ++i) {
-        for (size_t j = 0; j < a[0].size(); ++j) {
-            result[i][j] = a[i][j] - b[i][j];
-        }
-    }
-    return result;
-}
-
-// Clamps each element in the vector to be within the specified min and max values
-Vector LQR::clampVector(const Vector &vec, double minVal, double maxVal) {
-    Vector clamped = vec;
-    for (size_t i = 0; i < clamped.size(); ++i) {
-        if (clamped[i] < minVal) {
-            clamped[i] = minVal;
-        } else if (clamped[i] > maxVal) {
-            clamped[i] = maxVal;
-        }
-    }
-    return clamped;
-}
-
-// Computes the Euclidean norm of a vector
-double LQR::norm(const Vector &vec) {
-    double sum = 0.0;
-    for (double val : vec) {
-        sum += val * val;
-    }
-    return std::sqrt(sum);
-}
-
-// Adds two vectors element-wise
-Vector LQR::vectorAdd(const Vector &a, const Vector &b) {
-    Vector result(a.size());
-    for (size_t i = 0; i < a.size(); ++i) {
-        result[i] = a[i] + b[i];
-    }
-    return result;
-}
-
-Matrix LQR::getB(double deltat) {
-    Matrix B = {
-        {0                  ,    l*deltat/ I_xxt},
-        {l*deltat/ I_xxt    ,                  0},
-        {0                  ,                  0},
-        {0                  ,                  0}
-    };
-    return B;
-}
-
-Matrix LQR::getA(double deltat) {
-    Matrix A = {
-        {0+1                ,a_const*deltat      ,    0             ,                 0},
-        {-a_const*deltat  ,0 +1                  ,    0             ,                 0},
-        {0                ,-nz_eq*deltat      ,    0   +1          ,       r_eq*deltat},
-        {nz_eq*deltat     ,0                   ,  -r_eq*deltat    ,                 0 + 1}
-    };
-    return A;
-}
 
 
-Vector LQR::lqr(const Vector &actual_state, const Vector &desired_state, const Matrix &Q, const Matrix &R, const Matrix &A, const Matrix &B, double dt) {
+// Returns Input vector using the K matrix tuned using pydrake
+Vector LQR::lqr(const Vector &actual_state, const Vector &desired_state) {
 
 
     Vector x_error = actual_state;
@@ -190,75 +68,34 @@ Vector LQR::lqr(const Vector &actual_state, const Vector &desired_state, const M
         x_error[i] = desired_state[i] - actual_state[i];
     }
 
-    int N = 500;
-    std::vector<Matrix> P(N + 1);
-    P[N] = Q;
-    Matrix P_next = Q;
 
-    for (int i = N; i > 0; --i) {
-
-
-        Matrix P_current = matrixAdd(Q, multiply(transpose(A), multiply(P_next, A)));
-        P_current = matrixSubtract(P_current,
-                     multiply(multiply(transpose(A), multiply(P_next, B)),
-                     multiply(inverse2x2(matrixAdd(R, multiply(transpose(B), multiply(P_next, B)))),
-                     multiply(transpose(B), multiply(P_next, A)))));
-        P[i - 1] = P_current;
-        P_next = P_current;
-    }
 
     Matrix K;
     Vector u;
+    
+    // K matrix coming from LQR_Optimiser.ipynb
+    
+    K = {
+    {-3.31812040e-02, -4.21937270e-01, 5.36364498e-01, 6.35371466e-01, 6.31023742e-01},
+    {4.55570092e-01, 2.92259473e-02, -5.68221882e-01, -7.48228833e-01, 5.84679071e-01},
+    {6.02633476e-02, 4.56929927e-01, 8.18210808e-01, -7.01855853e-01, -6.19868705e-01}
+    };
 
-    K = multiply(inverse2x2(matrixAdd(R, multiply(transpose(B), multiply(P[N], B)))),
-                     multiply(transpose(B), multiply(P[N], A)));
     u = multiply(K, x_error);
+
 
     return u;
 }
 
 Vector LQR::getControlInputs(Vector actual_state, int detected_motor) {
 
-    if(detected_motor == 1 || detected_motor == 3){
-        r_eq = +8.5;
-        a_const = ((I_xxt - I_zzt)*r_eq/I_xxt) + I_zzp*( w1_eq + w2_eq + w3_eq + w4_eq ) / I_xxt ;
-    }
-    else{
-        r_eq = -8.5;
-        a_const = ((I_xxt - I_zzt)*r_eq/I_xxt) + I_zzp*( w1_eq + w2_eq + w3_eq + w4_eq ) / I_xxt ;
-    }
 
-    double dt = 1.0;
 
     Vector desired_state;
 
 
-    if(detected_motor == 1){
-     desired_state = {0.0, 2.53, 0.0, 0.2855};
-    }
-    else if (detected_motor == 2)
-    {
-     desired_state = {0.0, -2.53, 0.0, 0.2855};
-    }
-    else if (detected_motor == 3)
-    {
-     desired_state = {2.53, 0.0, -0.2855, 0.0};
-    }
-    else if(detected_motor == 4)
-    {
-     desired_state = {-2.53, 0.0, 0.2855, 0.0};
-    }
-
-
-
-    Matrix R = {{1   ,  0},
-                {0   ,  1}};
-
-    Matrix Q = {{1     ,0      ,0     ,0},
-                {0     ,1      ,0     ,0},
-                {0     ,0      ,20    ,0},
-                {1     ,0      ,0    ,20}};
-
+    // desired state coming from LQR_Optimiser.ipynb
+     desired_state = {0.0, 2.25361451700798, 11.694423666728527, 0.0, 0.1892};
 
 
     Vector state_error = actual_state;
@@ -266,15 +103,14 @@ Vector LQR::getControlInputs(Vector actual_state, int detected_motor) {
             state_error[j] -= desired_state[j];
     }
 
-    Vector desired_state_error = {0.0,  0.0,   0.0,   0.0};
+
+    Vector desired_state_error = {0.0,  0.0,   0.0,   0.0,  0.0};
 
 
-    Matrix A = getA(dt);
-    Matrix B = getB(dt);
-    Vector optimal_control_input = lqr(state_error, desired_state_error, Q, R, A, B, dt);
+
+    Vector optimal_control_input = lqr(state_error, desired_state_error);
 
 
     return optimal_control_input;
 }
-
 

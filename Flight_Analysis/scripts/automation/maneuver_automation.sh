@@ -15,7 +15,7 @@ loading_bar() {
 
 # Array of times (use whole numbers or decimals)
 # times=(17.0 20.0 25.0 30.0 35.0 40.0)
-times=(17.0)
+times=(17.0 20.0 25.0 30.0 35.0)
 failures=(1 2 3 4) # Motor failure indices
 
 # Run the entire process for each time and failure scenario

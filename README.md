@@ -142,7 +142,15 @@ inter-iit_Team62
 │   │   └── plotting_automation.py       # Script for automating data plotting  
 |   |
 │   ├── LQR_Optimizer.ipynb              # Notebook to optimize LQR and tuning penalty and control matrices.  
-│   └── px4_data_plotter.ipynb           # Notebook for plotting flight_logs data  
+│   └── px4_data_plotter.ipynb           # Notebook for plotting flight_logs data 
+|  
+└── px4_modules
+    ├── gazebo_classic_fault_tolerant_control  #Classic fault tolerant control module
+    ├── iris_with_standoffs              # IRIS quadcopter meshes
+    ├── single_motor_failure             # smf module 
+    ├── DroneState.msg                   # custom uORB message
+    ├── model.sdf                        # iris sdf file for harmonic
+     
 ```
 ### 9. Importing Iris quadcopter into Gazebo Harmionic :
 - To ensure consistent physical parameters for the drone in both Classic and Harmonic simulations, we decided to import the Iris quadcopter functionalities into the Harmonic environment as well.
@@ -273,7 +281,7 @@ python3 inter-iit_Team62/detection_tests/scripts/plotting_automation.py
 - This will store plots for all the odometry_data and px4_logs pairs in **<span style="color:orange">inter-iit_Team62/detection_tests/detection_logs/plots</span>**
 - It will also store a **result.csv** in **<span style="color:orange">inter-iit_Team62/detection_tests/detection_logs</span>**, which will contain the performance metrics of tests for the available number of data sessions.
 #### (ii) State Plots:
-- Refer to [px4_data_plotter.ipynb](Flight_Analysis/px4_data_plotter.ipynb). Update the path of **state_log** in the first cell and run the remaining cells to plot the state data.
+- Refer to [px4_data_plotter.ipynb](Flight_Analysis/px4_data_plotter.ipynb). Update the path of **flight_log** in the first cell and run the remaining cells to plot the state data.
 
 ## Automation Script Demonstration
 ### 1. Install tmux
@@ -284,6 +292,10 @@ sudo apt install tmux
 ```
 
 ### 2. Running demo.sh
+- Launch drone enviroment i.e. (DDS Agent and QGroundControl)
+```
+python3 inter-iit_Team62/Flight_Analysis/scripts/launch_drone_env.py 
+```
 - Run the [demo.sh](Flight_Analysis/scripts/automation/demo.sh) in a terminal using following command
 ```
 bash inter-iit_Team62/detection_tests/scripts/automation/demo.sh
