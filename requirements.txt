@@ -1,0 +1,8 @@
+plotly
+jupyter
+numpy
+scipy
+matplotlib
+ipykernel
+pandas
+
