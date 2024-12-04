@@ -4,8 +4,9 @@ This document includes:
 - setting up the simulation environment on your local system
 - implementing motor failure through custom PX4 based module
 - generating the results for real time behaviour of drone on motor failure
-- running the motor failure & motor detection modules based on PX4 architecture    
-The detection module will automatically trigger the landing or hovering modules.
+- running the motor failure & motor detection modules based on PX4 architecture
+- Demonstration of complete motor failure, motor detection and control architecture in simulation enviroment.
+The detection module will automatically trigger the control module.
 
 ## Pre-requisites :
 - You system should have ubuntu-22.04 LTS Desktop installed (either dual booted with windows or completely ubuntu 22).
@@ -47,6 +48,7 @@ sudo apt install ros-dev-tools
 ```
 
 ### 5. Install XRCE-DDS Agent :
+Installing XRCE-DDS Agent for accessing uORB topics from ROS2 topics.
 ```
 cd ~
 git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
@@ -58,6 +60,7 @@ make
 sudo make install
 sudo ldconfig /usr/local/lib/
 ```
+Note: **<span style="color:orange">smf sub</span>** and **<span style="color:orange">odometry_subscriber.py</span>** requires DDS Agent running.
 
 ### 6. Installing QGroundControl (GCS) :
 ```
@@ -102,19 +105,74 @@ commander takeoff
 ```
 If everything works fine, you should get something like this
 <div align="center">
-  <img src="readme-media/px4_setup.jpeg" alt="PX4 Setup file" />
+  <img src="readme-media/px4_setup.png" alt="PX4 Setup file" />
 </div> 
 
 - Use the command **<span style="color:orange">commander land</span>** to land the drone.
 
-### 8. Increasing motor constant :
-- To increase the thrust range of all the motors of the drone, we have increased the motor constant parameter by doubling it.
-
-- Go to **<span style="color:orange">~/PX4-Autopilot/Tools/simulation/gz/models/x500/</span>** directory and open the ***model.sdf*** file and replace the motor constant value of all motors to this
+### 8. Creating Workspace 
+Clone the repositry in Home directory
 ```
-<motorConstant>17.0916e-06</motorConstant>
+git clone interIIT_64 bkchdi bkchdi
 ```
+File Structure: 
+```
+inter-iit_Team62  
+├── Flight_Analysis                      # Contains all flight analysis data and scripts  
+│   ├── detection_logs                   # vehicle_odometry data for detection purpose
+│   │   ├── csv                          # Odometry CSV files
+│   │   │   └── odometry_data_0.csv         
+│   │   ├── plots                        # Odometry plots  
+│   │   │   └── odometry_plot_0.png          
+│   │   └── px4_logs                     # px4 detection logs  
+│   │       └── px4_logs_0.csv
+|   |           
+│   ├── flight_logs                      # Flight state logs from drone_state.h  
+│   │   └── flight_log_0.csv
+|   |            # Flight log details  
+│   ├── scripts                  
+│   │   ├── automation                   # Scripts for automated drone tasks  
+│   │   │   ├── demo.sh                  # Script for demonstrating smf functionality  
+│   │   │   ├── hovering.sh              # Script for automating drone hovering sessions  
+│   │   │   ├── takeoff.sh               # Script for automating drone takeoff sessions
+│   │   │   └── manuevring.sh            # Script for automating drone maneuvers sessions 
+│   │   ├── launch_drone_env.py          # launched drone env (QGC + DDS Agent)  
+│   │   ├── mission.py                   # Script for running a MAVSDK mission  
+│   │   ├── odometry_subscriber.py       # Script for subscribing to odometry data  
+│   │   └── plotting_automation.py       # Script for automating data plotting  
+|   |
+│   ├── LQR_Optimizer.ipynb              # Notebook to optimize LQR and tuning penalty and control matrices.  
+│   └── px4_data_plotter.ipynb           # Notebook for plotting flight_logs data  
+```
+### 9. Importing Iris quadcopter into Gazebo Harmionic :
+- To ensure consistent physical parameters for the drone in both Classic and Harmonic simulations, we decided to import the Iris quadcopter functionalities into the Harmonic environment as well.
+- Further we have also doubled thre motor constant parameter in the drone to increase the thrust range of all motors.
+- Follow the following setup instructions for the migration of iris.
+  
 
+- Go to **<span style="color:orange">~/PX4-Autopilot/Tools/simulation/gz/models/x500/</span>** directory and replace the ***model.sdf***  file to the this file: [model.sdf](px4_modules/model.sdf).
+- Further add meshes files in: **<span style="color:orange">~/PX4-Autopilot/Tools/simulation/gz/models/</span>** directory and paste the complete [iris_with_standoffs](px4_modules/iris_with_standoffs) folder there.
+### 10. Adding Custom uORB message **<span style="color:orange">drone_state.msg</span>**
+- In order to analyze data from controller we have added a custom uORB message. Follow the steps to add the custom uORB message in PX4 firmware.
+- Paste the [DroneState.msg](px4_modules/DroneState.msg) into **<span style="color:orange">~/PX4-Autopilot/msg/</span>** directory.
+- Locate the CMakeLists.txt in **<span style="color:orange">~/PX4-Autopilot/msg/</span>** and add the **<span style="color:orange">DroneState.msg</span>**
+
+### 11. Updating CMAKE_CXX_STANDARD Version.
+- Follow the following steps to upgrade the CMAKE_CXX_STANDARD to 17.
+- Locate the **<span style="color:orange">~/PX4-Autopilot/CMakeLists.txt/</span>** file and change the CMAKE_CXX_STANDARD version
+```
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+```
+Make sure to match the above block in the CMakeLists.txt.
+#### Installing Filesystem
+-Install [filesystem](https://docs.pyfilesystem.org/en/latest/introduction.html) for data collection from SMF Module. 
+```
+pip install filesystem
+```
 ## Building custom px4 module
 - For simulating single motor failure, we have created a custom module based on PX4 firmware architecture named [single_motor_failure](px4_modules/single_motor_failure/).
 - In this module we've integrated injection of single motor failure, detection of motor failure and controlling the drone after detection of motor failure.
@@ -127,9 +185,9 @@ Applications are added to the build/firmware in the appropriate board-level px4b
 
 PX4-SITL (Simulator) : px4_sitl_default
 
-- To use this module, copy the **<span style="color:orange">single_motor_failure</span>** directory to **<span style="color:orange">~/PX4-Autopilot/src/examples/</span>** directory.
+- To use this module, copy the [single_motor_failure](px4_modules/single_motor_failure/) directory to **<span style="color:orange">~/PX4-Autopilot/src/examples/</span>** directory.
+ Further run boardconfig command and add smf module to PX4 sitl firmware and build afterwards.
 
-- To enable the compilation of the application/module into the firmware add the corresponding Kconfig key CONFIG_EXAMPLES_TEST_MODULE=y in the **<span style="color:orange">px4_ofboard</span>** file or run boardcofonfig make command a follows
 ```
 cd ~/PX4-Autopilot/
 make px4_sitl_default boardconfig
@@ -141,23 +199,29 @@ make px4_sitl_default boardconfig
 </div>
 
 
-- Go to examples, you will file a new module named **<span style="color:orange">single_motor_failure</span>**, select that & press enter. Now save this module by pressing **<span style="color:orange">Q</span>** & then select **<span style="color:orange">yes</span>**.
+- Go to examples, you will file a new module named **<span style="color:orange">single_motor_failure</span>**, select that & press enter. Now save this module by pressing **<span style="color:orange">Q</span>** & then select **<span style="color:orange">yes</span>**. 
 
-- Now this module is ready to run as part of PX4 firmware in sitl.     
+- Now this module is ready to run as part of PX4 firmware in sitl. Run the following command to build the module in PX4 firmware.
+```
+cd ~/PX4-Autopilot/
+make px4_sitl
+```
 
 **<span style="color:black">*NOTE:*</span>**   
 For other boards, please select the specific board in the compiltion step.
 
+## **<span style="color:orange">single_motor_failure</span>** module Demonstration
 
-## Using the **<span style="color:orange">single_motor_failure</span>** module
+### 1. Overview:
+<div align="center">
+  <img src="readme-media/SMF_Architecture.png" alt="PX4 Setup file" />
+</div> 
 
-### 1. running detection part first for motor failure:
-
-- launch the px4 sitl & gazebo
+### 2.Detector Deamon
 ```
 cd ~/PX4-Autopilot
 make px4_sitl gz_x500
-``` 
+```
 - Run XRCE-DDS agent to convert px4 uorb topics to ros2 topics
 ```
 cd ~/Micro-XRCE-DDS-Agent/build
@@ -171,66 +235,58 @@ cd ~ && ./QGroundControl.AppImage
 ```
 commander takeoff
 ```
-- Run the detection file of the module to start checking for motor failure (if there is any) by running this command in px4 sitl terminal
+Note: Use **<span style="color:orange">param set MIS_TAKEOFF_ALT <$Height></span>** to change the default height of takeoff.
+
+- Run the detection file of the module to initiate **<span style="color:orange">Detector Deamon</span>** which will be keep checking for motor failure (if there is any).
 ```
 smf detect
 ```
-
-### 2. injecting the motor failure:
-Before running this command, make sure everything in step 1 is already working.
-
-- run this command in px4 sitl terminal to fail a motor with **<span style="color:orange">motor_id=2</span>**
+- This will store a csv log file in **<span style="color:orange">inter-iit_Team62/detection_tests/detection_logs/px4_logs</span>** as **px4_logs_0.csv**.
+### 3. Odom and State data Subscribing (optional)
+-  Run the following command in new terminal to start collecting odometry data from **vehicle_odometry** ROS@ topic and will store **odometry_data_0.csv** in **<span style="color:orange">inter-iit_Team62/detection_tests/detection_logs/csv</span>**
 ```
-smf start 2
+python3 inter-iit_Team62/detection_tests/scripts/odometry_subscriber.py
 ```
-The output would be something like this
-
-<div align="center">
-  <img src="readme-media/motor_failure_detect.jpeg" alt="PX4 Setup file" />
-</div> 
-
-
-The motor_id can be from **<span style="color:orange">[0, 4]</span>**.     
-0 means --> fail all motors at once.    
-1 means --> fail single motor with motor_id=0
-and so on.
-
-- After running this command, the **<span style="color:orange">smf detect</span>** will figure that a motor with motor_id=2 has been failed.
-
-
-## Generating flight data after failure injection
-- The logic for motor failure detection has been implemented by visualizing the variations of avg_az(average angular acceleration of drone along z axis) and avg_rr(average rate of change of roll value) for multiple instances in different cases like hovering, takeoff & landing.  
-- The code for generating the flight data for different cases of drone flight (during and after failure injection) has been implemented in [detection_tests/scripts/](detection_tests/scripts).
-- Three different types of data are being generated by the scripts :
-1. Odometry data of drone in [detection_logs/csv/](detection_logs/csv/) directory.
-2. Plots of odometry data wrt. time in [detection_logs/plots/](detection_logs/plots/) directory.
-
-### 1. Install the specific version of python libraries to run the code :
+- Initiate subscribing deamon using **smf sub** in SITL shell to start subscribing state data from **drone_state.h** uORB topic and log them in **<span style="color:orange">inter-iit_Team62/detection_tests/detection_logs/state_logs</span>**
 ```
-cd ~/inter-iit_Team62/detection_tests/scripts/
-pip install -r requirements.txt
+smf sub
+```
+### 3. injecting the motor failure:
+Before running this command, make sure everything in step 2 is already working.
+
+- run this command in px4 sitl terminal to fail a motor in gazebo simulation
+```
+smf start
+```
+This will initiate the **<span style="color:orange">Injector Deamon</span>** and will inject motor failure.
+
+### 5. Motor Failure Control 
+- After injecting motor failure, **<span style="color:orange"> Detector Deamon** should detect the failure and trigger a detection flag which will eventually activates **Failure Controller**. 
+- It will publish state logs to **drone_state**, which will be subscribed by **subscriber deamon** (if initiated).
+
+### 6. Analysing Collected data and logs
+#### (i) Odom Plots:
+- This requires px4_logs_0.csv and odometry_data_0.csv to plot data for a flight.
+```
+python3 inter-iit_Team62/detection_tests/scripts/plotting_automation.py 
+```
+- This will store plots for all the odometry_data and px4_logs pairs in **<span style="color:orange">inter-iit_Team62/detection_tests/detection_logs/plots</span>**
+- It will also store a **result.csv** in **<span style="color:orange">inter-iit_Team62/detection_tests/detection_logs</span>**, which will contain the performance metrics of tests for the available number of data sessions.
+#### (ii) State Plots:
+- Refer to [px4_data_plotter.ipynb](Flight_Analysis/px4_data_plotter.ipynb). Update the path of **state_log** in the first cell and run the remaining cells to plot the state data.
+
+## Automation Script Demonstration
+### 1. Install tmux
+- Install tmux, which is required for automated bash scripts.
+```
+sudo apt update
 sudo apt install tmux
 ```
 
-### 2. launch the python file to run xrce-dds agent alongside qground control :
+### 2. Running demo.sh
+- Run the [demo.sh](Flight_Analysis/scripts/automation/demo.sh) in a terminal using following command
 ```
-cd ~/inter-iit_Team62/detection_tests/scripts/
-python3 launch_drone_env.py
-````
-
-### 3. Generating the detection data for each of cases after failure injection :
-- Those three cases are --> takeoff, hover, landing.
-
+bash inter-iit_Team62/detection_tests/scripts/automation/demo.sh
 ```
-cd ~/inter-iit_Team62/detection_tests/scripts/automation/
-bash demo.sh
-```
-
 - This bash file uses tmux to run different sessions of gazebo & px4 sitl.
-- This will launch px4 sitl with gazebo and then fail the specific motor for each of those three cases and generate the  **<span style="color:orange">detection_logs</span>**.
-
-### 4. Plotting graphs for odometry data :
-```
-cd ~/inter-iit_Team62/detection_tests/scripts/
-python3 plotting_automation.py
-```
+- This will launch a complete session for demonstration of motor_failure and will save the required logs in respective directories. Refer to [6](#6-analysing-collected-data-and-logs) for plotting collected data. 
