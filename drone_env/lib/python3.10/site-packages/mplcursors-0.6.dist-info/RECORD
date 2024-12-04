@@ -1,0 +1,14 @@
+mplcursors-0.6.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+mplcursors-0.6.dist-info/LICENSE.txt,sha256=pm3BrEYInvsLmOhkivD7LoiLxK1S4WHcUxnUxPt3N-s,857
+mplcursors-0.6.dist-info/METADATA,sha256=Y-A082M50iNnn6TJd00N1AHfp04BJ8UOvNLTIDiZMqM,2960
+mplcursors-0.6.dist-info/RECORD,,
+mplcursors-0.6.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
+mplcursors-0.6.dist-info/WHEEL,sha256=P9jw-gEje8ByB7_hXoICnHtVCrEwMQh-630tKvQWehc,91
+mplcursors-0.6.dist-info/top_level.txt,sha256=Esnt0YnfOPoq1DRbSnS68tPM_akmsCnyuCAR_Tz3EDc,11
+mplcursors.pth,sha256=uMQDC_OSf2vOum5qBz4xHNSA4oCzs884YTQTcp-Ql88,2297
+mplcursors/__init__.py,sha256=PvaoQUfmTfDCAkKPOJOtGnA9OaCWU0uAsBAhg4_XNNk,470
+mplcursors/__pycache__/__init__.cpython-310.pyc,,
+mplcursors/__pycache__/_mplcursors.cpython-310.pyc,,
+mplcursors/__pycache__/_pick_info.cpython-310.pyc,,
+mplcursors/_mplcursors.py,sha256=IpJNDa-PALZAtAzxOqnEXl4u1y-36vEXqn8ItQB1QzU,29530
+mplcursors/_pick_info.py,sha256=QrVhi4jgFpg7Vum_u2EVvfDUzl6HcIa8uKeb6fuknys,26908
