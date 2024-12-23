@@ -212,8 +212,9 @@ This doc also containes instructions to use our custom px4 modules.
 
 ---
 
-### Contributors :
-[Mohit](https://github.com/ab31mohit)    
-[Rajeev](https://github.com/rajeev-gupta-bashrc)    
-[Ronnit](https://github.com/NULL300)      
-[Abhikankshit](https://github.com/OARSS)
+***References*** :
+- [Official PX4 doc](https://docs.px4.io/main/en/index.html)
+- [PX4 Modules Tutorial](https://github.com/PX4/PX4-user_guide/blob/main/tr/modules/hello_sky.md)
+- PX4 uORB topics doc [Part 1](https://px4.io/px4-uorb-explained-part-1/) [Part 2](https://px4.io/px4-uorb-explained-part-2/) [Part 3](https://px4.io/px4-uorb-explained-part-3-the-deep-stuff/)
+- [PX4 SITL setup doc](https://kuat-telegenov.notion.site/How-to-setup-PX4-SITL-with-ROS2-and-XRCE-DDS-Gazebo-simulation-on-Ubuntu-22-e963004b701a4fb2a133245d96c4a247)
+- [PX4 with MAVSDK-Python](https://web.archive.org/web/20201211155626/https://auterion.com/getting-started-with-mavsdk-python/)
