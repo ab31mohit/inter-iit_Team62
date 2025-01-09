@@ -1,3 +1,5 @@
+![GitHub repo size](https://img.shields.io/github/repo-size/ab31mohit/inter-iit_Team62)
+
 # Inter-IIT IdeaForge Doc
 This is the main document for implementing the solutions for Inter-IIT IdeaForge PS.   
 This document includes:
