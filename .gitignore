@@ -2,3 +2,4 @@ px4_drone_ros_control/logs/*.csv
 px4_drone_ros_control/logs/*.png
 px4_drone_ros_control/scripts/__*
 .vscode
+detection_tests/px4_detection_csv/*.csv
